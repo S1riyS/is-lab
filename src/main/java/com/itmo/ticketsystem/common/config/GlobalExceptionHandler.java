@@ -6,6 +6,7 @@ import org.springframework.http.*;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 
 import com.itmo.ticketsystem.common.dto.APIErrorResponse;
 import com.itmo.ticketsystem.common.dto.ValidationErrorResponse;
@@ -33,6 +34,29 @@ public class GlobalExceptionHandler {
                 .details(details)
                 .build();
 
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseBody
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<APIErrorResponse> handleHttpMessageNotReadable(
+            HttpMessageNotReadableException ex,
+            HttpServletRequest request) {
+        
+        String message = ex.getMessage();
+        if (message != null && message.contains("Cannot deserialize value of type")) {
+            message = "Invalid value provided for enum. Expected one of: RED, YELLOW, BROWN, WHITE, ORANGE.";
+        } else {
+            message = "Malformed JSON request.";
+        }
+
+        APIErrorResponse error = APIErrorResponse.builder()
+                .error(HttpStatus.BAD_REQUEST.name())
+                .title("Invalid request format")
+                .details(message)
+                .build();
+        
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
