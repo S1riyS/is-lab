@@ -30,4 +30,3 @@ export default function Modal({ title, children, onClose, onSubmit, submitText =
     );
 }
 
-

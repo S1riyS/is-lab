@@ -1,3 +1,4 @@
+// src/modules/common/components/AuthButtons.tsx
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from 'src/store';
@@ -5,98 +6,213 @@ import { clearAuth, setAuth } from '../state/authSlice';
 import { useAppDispatch } from 'src/store';
 import { useLoginMutation, useRegisterMutation } from '../api/authApi';
 import { parseError } from 'src/modules/common/api/baseApi';
-import Modal from 'src/modules/common/components/Modal';
+import {
+  Button,
+  Stack,
+  Badge,
+  Form,
+  Modal as BSModal,
+  ModalHeader,
+  ModalTitle,
+  ModalBody,
+  ModalFooter,
+  Alert,
+} from 'react-bootstrap';
 
 export default function AuthButtons() {
-    const dispatch = useAppDispatch();
-    const auth = useSelector((s: RootState) => s.auth);
-    const [login, { isLoading: isLoggingIn }] = useLoginMutation();
-    const [register, { isLoading: isRegistering }] = useRegisterMutation();
-    const [error, setError] = useState<string | null>(null);
+  const dispatch = useAppDispatch();
+  const auth = useSelector((s: RootState) => s.auth);
+  const [login, { isLoading: isLoggingIn }] = useLoginMutation();
+  const [register, { isLoading: isRegistering }] = useRegisterMutation();
+  const [error, setError] = useState<string | null>(null);
 
-    const [showLogin, setShowLogin] = useState(false);
-    const [showRegister, setShowRegister] = useState(false);
-    const [loginForm, setLoginForm] = useState({ username: '', password: '' });
-    const [registerForm, setRegisterForm] = useState({ username: '', password: '', role: 'USER' });
+  const [showLogin, setShowLogin] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
+  const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+  const [registerForm, setRegisterForm] = useState({
+    username: '',
+    password: '',
+    role: 'USER',
+  });
 
-    async function submitLogin() {
-        setError(null);
-        try {
-            const res = await login(loginForm).unwrap();
-            dispatch(setAuth(res));
-            setShowLogin(false);
-            setLoginForm({ username: '', password: '' });
-        } catch (e) {
-            setError(parseError(e));
-        }
+  async function submitLogin() {
+    setError(null);
+    try {
+      const res = await login(loginForm).unwrap();
+      dispatch(setAuth(res));
+      setShowLogin(false);
+      setLoginForm({ username: '', password: '' });
+    } catch (e) {
+      setError(parseError(e));
     }
+  }
 
-    async function submitRegister() {
-        setError(null);
-        try {
-            const res = await register(registerForm).unwrap();
-            dispatch(setAuth(res));
-            setShowRegister(false);
-            setRegisterForm({ username: '', password: '', role: 'USER' });
-        } catch (e) {
-            setError(parseError(e));
-        }
+  async function submitRegister() {
+    setError(null);
+    try {
+      const res = await register(registerForm).unwrap();
+      dispatch(setAuth(res));
+      setShowRegister(false);
+      setRegisterForm({ username: '', password: '', role: 'USER' });
+    } catch (e) {
+      setError(parseError(e));
     }
+  }
 
-    function handleLogout() {
-        dispatch(clearAuth());
-    }
+  function handleLogout() {
+    dispatch(clearAuth());
+  }
 
-    if (auth.user) {
-        return (
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <span>{auth.user.username} ({auth.user.role})</span>
-                <button onClick={handleLogout}>Log out</button>
-            </div>
-        );
-    }
-
+  if (auth.user) {
     return (
-        <div className="d-flex gap-2 align-items-center">
-            <button className="btn btn-outline-primary btn-sm" disabled={isLoggingIn} onClick={() => setShowLogin(true)}>Log in</button>
-            <button className="btn btn-primary btn-sm" disabled={isRegistering} onClick={() => setShowRegister(true)}>Sign up</button>
-            {error && <span className="text-danger small">{error}</span>}
-
-            {showLogin && (
-                <Modal title="Log in" onClose={() => setShowLogin(false)} onSubmit={submitLogin} submitText={isLoggingIn ? 'Logging in...' : 'Log in'}>
-                    <form className="vstack gap-3">
-                        <div>
-                            <label className="form-label">Username</label>
-                            <input className="form-control" value={loginForm.username} onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })} />
-                        </div>
-                        <div>
-                            <label className="form-label">Password</label>
-                            <input type="password" className="form-control" value={loginForm.password} onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })} />
-                        </div>
-                    </form>
-                </Modal>
-            )}
-
-            {showRegister && (
-                <Modal title="Sign up" onClose={() => setShowRegister(false)} onSubmit={submitRegister} submitText={isRegistering ? 'Signing up...' : 'Sign up'}>
-                    <form className="vstack gap-3">
-                        <div>
-                            <label className="form-label">Username</label>
-                            <input className="form-control" value={registerForm.username} onChange={(e) => setRegisterForm({ ...registerForm, username: e.target.value })} />
-                        </div>
-                        <div>
-                            <label className="form-label">Password</label>
-                            <input type="password" className="form-control" value={registerForm.password} onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })} />
-                        </div>
-                        <div>
-                            <label className="form-label">Role</label>
-                            <input className="form-control" placeholder="USER" value={registerForm.role} onChange={(e) => setRegisterForm({ ...registerForm, role: e.target.value })} />
-                        </div>
-                    </form>
-                </Modal>
-            )}
-        </div>
+      <Stack direction="horizontal" gap={2} className="align-items-center">
+        <span>
+          {auth.user.username}{' '}
+          <Badge bg="secondary">{auth.user.role}</Badge>
+        </span>
+        <Button variant="outline-danger" size="sm" onClick={handleLogout}>
+          Log out
+        </Button>
+      </Stack>
     );
+  }
+
+  return (
+    <>
+      <Stack direction="horizontal" gap={2} className="align-items-center flex-wrap">
+        <Button
+          variant="outline-primary"
+          size="sm"
+          disabled={isLoggingIn}
+          onClick={() => setShowLogin(true)}
+        >
+          Log in
+        </Button>
+        <Button
+          variant="primary"
+          size="sm"
+          disabled={isRegistering}
+          onClick={() => setShowRegister(true)}
+        >
+          Sign up
+        </Button>
+        {error && (
+          <Alert variant="danger" className="mb-0 p-2 small">
+            {error}
+          </Alert>
+        )}
+      </Stack>
+
+      {/* Login Modal */}
+      <BSModal show={showLogin} onHide={() => setShowLogin(false)} centered>
+        <ModalHeader closeButton>
+          <ModalTitle>Log in</ModalTitle>
+        </ModalHeader>
+        <ModalBody>
+          <Form
+            onSubmit={(e) => {
+              e.preventDefault();
+              submitLogin();
+            }}
+          >
+            <Form.Group className="mb-3">
+              <Form.Label>Username</Form.Label>
+              <Form.Control
+                type="text"
+                value={loginForm.username}
+                onChange={(e) =>
+                  setLoginForm({ ...loginForm, username: e.target.value })
+                }
+                required
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Password</Form.Label>
+              <Form.Control
+                type="password"
+                value={loginForm.password}
+                onChange={(e) =>
+                  setLoginForm({ ...loginForm, password: e.target.value })
+                }
+                required
+              />
+            </Form.Group>
+          </Form>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="secondary" onClick={() => setShowLogin(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={submitLogin}
+            disabled={isLoggingIn}
+          >
+            {isLoggingIn ? 'Logging in...' : 'Log in'}
+          </Button>
+        </ModalFooter>
+      </BSModal>
+
+      {/* Register Modal */}
+      <BSModal show={showRegister} onHide={() => setShowRegister(false)} centered>
+        <ModalHeader closeButton>
+          <ModalTitle>Sign up</ModalTitle>
+        </ModalHeader>
+        <ModalBody>
+          <Form
+            onSubmit={(e) => {
+              e.preventDefault();
+              submitRegister();
+            }}
+          >
+            <Form.Group className="mb-3">
+              <Form.Label>Username</Form.Label>
+              <Form.Control
+                type="text"
+                value={registerForm.username}
+                onChange={(e) =>
+                  setRegisterForm({ ...registerForm, username: e.target.value })
+                }
+                required
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Password</Form.Label>
+              <Form.Control
+                type="password"
+                value={registerForm.password}
+                onChange={(e) =>
+                  setRegisterForm({ ...registerForm, password: e.target.value })
+                }
+                required
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Role</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="USER"
+                value={registerForm.role}
+                onChange={(e) =>
+                  setRegisterForm({ ...registerForm, role: e.target.value })
+                }
+              />
+            </Form.Group>
+          </Form>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="secondary" onClick={() => setShowRegister(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={submitRegister}
+            disabled={isRegistering}
+          >
+            {isRegistering ? 'Signing up...' : 'Sign up'}
+          </Button>
+        </ModalFooter>
+      </BSModal>
+    </>
+  );
 }
-
-

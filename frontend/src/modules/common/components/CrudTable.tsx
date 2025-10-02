@@ -1,3 +1,4 @@
+// src/modules/common/components/CrudTable.tsx
 import { ReactNode } from 'react';
 
 export type Column<T> = {
@@ -13,38 +14,61 @@ type Props<T> = {
     onDelete?: (row: T) => void;
 };
 
-export default function CrudTable<T extends { id?: number | string }>({ data, columns, onEdit, onDelete }: Props<T>) {
+export default function CrudTable<T extends { id?: number | string }>({
+    data,
+    columns,
+    onEdit,
+    onDelete,
+}: Props<T>) {
     return (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-                <tr>
-                    {columns.map((c) => (
-                        <th key={String(c.key)} style={{ textAlign: 'left', borderBottom: '1px solid #ddd', padding: 8 }}>{c.header}</th>
-                    ))}
-                    {(onEdit || onDelete) && <th style={{ textAlign: 'left', borderBottom: '1px solid #ddd', padding: 8 }}>Actions</th>}
-                </tr>
-            </thead>
-            <tbody>
-                {data.map((row) => (
-                    <tr key={String((row as any).id ?? Math.random())}>
+        <div className="table-responsive">
+            <table className="table table-striped table-hover align-middle">
+                <thead>
+                    <tr>
                         {columns.map((c) => (
-                            <td key={String(c.key)} style={{ borderBottom: '1px solid #eee', padding: 8 }}>
-                                {c.render ? c.render(row) : String((row as any)[c.key as any])}
-                            </td>
+                            <th key={String(c.key)} className="px-3 py-2">
+                                {c.header}
+                            </th>
                         ))}
-                        {(onEdit || onDelete) && (
-                            <td style={{ borderBottom: '1px solid #eee', padding: 8, display: 'flex', gap: 8 }}>
-                                {onEdit && <button onClick={() => onEdit(row)}>Edit</button>}
-                                {onDelete && <button onClick={() => onDelete(row)}>Delete</button>}
-                            </td>
-                        )}
+                        {(onEdit || onDelete) && <th className="px-3 py-2">Actions</th>}
                     </tr>
-                ))}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    {data.map((row) => (
+                        <tr key={String(row.id ?? Math.random())}>
+                            {columns.map((c) => (
+                                <td key={String(c.key)} className="px-3 py-2">
+                                    {c.render ? c.render(row) : String((row as any)[c.key])}
+                                </td>
+                            ))}
+                            {(onEdit || onDelete) && (
+                                <td className="px-3 py-2">
+                                    <div className="d-flex gap-2">
+                                        {onEdit && (
+                                            <button
+                                                type="button"
+                                                className="btn btn-sm btn-outline-primary"
+                                                onClick={() => onEdit(row)}
+                                            >
+                                                Edit
+                                            </button>
+                                        )}
+                                        {onDelete && (
+                                            <button
+                                                type="button"
+                                                className="btn btn-sm btn-outline-danger"
+                                                onClick={() => onDelete(row)}
+                                            >
+                                                Delete
+                                            </button>
+                                        )}
+                                    </div>
+                                </td>
+                            )}
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
     );
 }
-
-
-
-

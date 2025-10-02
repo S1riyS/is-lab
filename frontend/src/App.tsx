@@ -1,6 +1,7 @@
 import { Link, Route, Routes } from 'react-router-dom';
 import routes from './routes';
 import AuthButtons from './modules/auth/components/AuthButtons';
+import 'bootstrap/dist/css/bootstrap.min.css'
 
 export default function App() {
     return (
