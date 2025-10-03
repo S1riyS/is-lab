@@ -1,5 +1,10 @@
 package com.itmo.ticketsystem.coordinates;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.itmo.ticketsystem.ticket.Ticket;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
@@ -25,4 +30,7 @@ public class Coordinates {
     @Column(name = "y")
     @NotNull(message = "Y coordinate cannot be null")
     private Float y;
+
+    @OneToMany(mappedBy = "coordinates", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Ticket> tickets = new ArrayList<>();
 }

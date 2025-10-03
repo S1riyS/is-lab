@@ -31,7 +31,7 @@ public class Ticket {
     @NotNull(message = "Name cannot be null")
     private String name;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "coordinates_id")
     @NotNull(message = "Coordinates cannot be null")
     private Coordinates coordinates;
@@ -40,12 +40,12 @@ public class Ticket {
     @NotNull(message = "Creation date cannot be null")
     private Date creationDate;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "person_id")
     @NotNull(message = "Person cannot be null")
     private Person person;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id")
     private Event event;
 
@@ -72,7 +72,7 @@ public class Ticket {
     @NotNull(message = "Comment cannot be null")
     private String comment;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "venue_id")
     private Venue venue;
 
