@@ -1,61 +1,59 @@
 // src/modules/common/components/AuthButtons.tsx
-import { useState } from 'react';
-import { useSelector } from 'react-redux';
-import { RootState } from 'src/store';
-import { clearAuth, setAuth } from '../state/authSlice';
-import { useAppDispatch } from 'src/store';
-import { useLoginMutation, useRegisterMutation } from '../api/authApi';
-import { parseError } from 'src/modules/common/api/baseApi';
+import { useState } from "react";
+
 import {
-  Button,
-  Stack,
-  Badge,
-  Form,
   Modal as BSModal,
-  ModalHeader,
-  ModalTitle,
+  Badge,
+  Button,
+  Form,
   ModalBody,
   ModalFooter,
-  Alert,
-} from 'react-bootstrap';
+  ModalHeader,
+  ModalTitle,
+  Stack,
+} from "react-bootstrap";
+import { useSelector } from "react-redux";
+
+import { showErrorToast } from "@common/api/baseApi";
+import { RootState, useAppDispatch } from "@store";
+
+import { useLoginMutation, useRegisterMutation } from "../api/authApi";
+import { clearAuth, setAuth } from "../state/authSlice";
 
 export default function AuthButtons() {
   const dispatch = useAppDispatch();
   const auth = useSelector((s: RootState) => s.auth);
   const [login, { isLoading: isLoggingIn }] = useLoginMutation();
   const [register, { isLoading: isRegistering }] = useRegisterMutation();
-  const [error, setError] = useState<string | null>(null);
 
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
-  const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+  const [loginForm, setLoginForm] = useState({ username: "", password: "" });
   const [registerForm, setRegisterForm] = useState({
-    username: '',
-    password: '',
-    role: 'USER',
+    username: "",
+    password: "",
+    role: "USER",
   });
 
   async function submitLogin() {
-    setError(null);
     try {
       const res = await login(loginForm).unwrap();
       dispatch(setAuth(res));
       setShowLogin(false);
-      setLoginForm({ username: '', password: '' });
+      setLoginForm({ username: "", password: "" });
     } catch (e) {
-      setError(parseError(e));
+      showErrorToast(e);
     }
   }
 
   async function submitRegister() {
-    setError(null);
     try {
       const res = await register(registerForm).unwrap();
       dispatch(setAuth(res));
       setShowRegister(false);
-      setRegisterForm({ username: '', password: '', role: 'USER' });
+      setRegisterForm({ username: "", password: "", role: "USER" });
     } catch (e) {
-      setError(parseError(e));
+      showErrorToast(e);
     }
   }
 
@@ -67,8 +65,7 @@ export default function AuthButtons() {
     return (
       <Stack direction="horizontal" gap={2} className="align-items-center">
         <span>
-          {auth.user.username}{' '}
-          <Badge bg="secondary">{auth.user.role}</Badge>
+          {auth.user.username} <Badge bg="secondary">{auth.user.role}</Badge>
         </span>
         <Button variant="outline-danger" size="sm" onClick={handleLogout}>
           Log out
@@ -79,7 +76,11 @@ export default function AuthButtons() {
 
   return (
     <>
-      <Stack direction="horizontal" gap={2} className="align-items-center flex-wrap">
+      <Stack
+        direction="horizontal"
+        gap={2}
+        className="align-items-center flex-wrap"
+      >
         <Button
           variant="outline-primary"
           size="sm"
@@ -96,11 +97,6 @@ export default function AuthButtons() {
         >
           Sign up
         </Button>
-        {error && (
-          <Alert variant="danger" className="mb-0 p-2 small">
-            {error}
-          </Alert>
-        )}
       </Stack>
 
       {/* Login Modal */}
@@ -148,13 +144,17 @@ export default function AuthButtons() {
             onClick={submitLogin}
             disabled={isLoggingIn}
           >
-            {isLoggingIn ? 'Logging in...' : 'Log in'}
+            {isLoggingIn ? "Logging in..." : "Log in"}
           </Button>
         </ModalFooter>
       </BSModal>
 
       {/* Register Modal */}
-      <BSModal show={showRegister} onHide={() => setShowRegister(false)} centered>
+      <BSModal
+        show={showRegister}
+        onHide={() => setShowRegister(false)}
+        centered
+      >
         <ModalHeader closeButton>
           <ModalTitle>Sign up</ModalTitle>
         </ModalHeader>
@@ -209,7 +209,7 @@ export default function AuthButtons() {
             onClick={submitRegister}
             disabled={isRegistering}
           >
-            {isRegistering ? 'Signing up...' : 'Sign up'}
+            {isRegistering ? "Signing up..." : "Sign up"}
           </Button>
         </ModalFooter>
       </BSModal>

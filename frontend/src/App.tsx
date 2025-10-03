@@ -1,42 +1,54 @@
-import { Link, Route, Routes } from 'react-router-dom';
-import routes from './routes';
-import AuthButtons from './modules/auth/components/AuthButtons';
-import 'bootstrap/dist/css/bootstrap.min.css'
+import "bootstrap/dist/css/bootstrap.min.css";
+
+import { Container, Nav, Navbar } from "react-bootstrap";
+import { IoTicket } from "react-icons/io5";
+import { Link, Route, Routes } from "react-router-dom";
+
+import AuthButtons from "@auth/components/AuthButtons";
+import routes from "@routes";
 
 export default function App() {
-    return (
-        <div className="container py-3">
-            <nav className="navbar navbar-expand-lg bg-body-tertiary rounded mb-3">
-                <div className="container-fluid">
-                    <Link className="navbar-brand" to="/">Ticket System</Link>
-                    <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsExample" aria-controls="navbarsExample" aria-expanded="false" aria-label="Toggle navigation">
-                        <span className="navbar-toggler-icon"></span>
-                    </button>
-                    <div className="collapse navbar-collapse" id="navbarsExample">
-                        <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-                            <li className="nav-item"><Link className="nav-link" to="/tickets">Tickets</Link></li>
-                            <li className="nav-item"><Link className="nav-link" to="/events">Events</Link></li>
-                            <li className="nav-item"><Link className="nav-link" to="/venues">Venues</Link></li>
-                            <li className="nav-item"><Link className="nav-link" to="/persons">Persons</Link></li>
-                            <li className="nav-item"><Link className="nav-link" to="/locations">Locations</Link></li>
-                            <li className="nav-item"><Link className="nav-link" to="/coordinates">Coordinates</Link></li>
-                            <li className="nav-item"><Link className="nav-link" to="/users">Users</Link></li>
-                        </ul>
-                        <div className="d-flex">
-                            <AuthButtons />
-                        </div>
-                    </div>
-                </div>
-            </nav>
-            <Routes>
-                {routes.map((r) => (
-                    <Route key={r.path} path={r.path} element={r.element} />
-                ))}
-            </Routes>
-        </div>
-    );
+  return (
+    <Container>
+      <Navbar expand="lg" className="bg-body-tertiary rounded mb-3">
+        <Container fluid>
+          <Navbar.Brand as={Link} to="/">
+            <IoTicket /> Ticket System
+          </Navbar.Brand>
+          <Navbar.Toggle aria-controls="basic-navbar-nav" />
+          <Navbar.Collapse id="basic-navbar-nav">
+            <Nav className="me-auto">
+              <Nav.Link as={Link} to="/tickets">
+                Tickets
+              </Nav.Link>
+              <Nav.Link as={Link} to="/events">
+                Events
+              </Nav.Link>
+              <Nav.Link as={Link} to="/venues">
+                Venues
+              </Nav.Link>
+              <Nav.Link as={Link} to="/persons">
+                Persons
+              </Nav.Link>
+              <Nav.Link as={Link} to="/locations">
+                Locations
+              </Nav.Link>
+              <Nav.Link as={Link} to="/coordinates">
+                Coordinates
+              </Nav.Link>
+            </Nav>
+            <Nav>
+              <AuthButtons />
+            </Nav>
+          </Navbar.Collapse>
+        </Container>
+      </Navbar>
+
+      <Routes>
+        {routes.map((r) => (
+          <Route key={r.path} path={r.path} element={r.element} />
+        ))}
+      </Routes>
+    </Container>
+  );
 }
-
-
-
-

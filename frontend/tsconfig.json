@@ -1,34 +1,38 @@
 {
-    "compilerOptions": {
-        "target": "ES2020",
-        "useDefineForClassFields": true,
-        "lib": [
-            "ES2020",
-            "DOM",
-            "DOM.Iterable"
-        ],
-        "module": "ESNext",
-        "skipLibCheck": true,
-        "moduleResolution": "bundler",
-        "resolveJsonModule": true,
-        "isolatedModules": true,
-        "noEmit": true,
-        "jsx": "react-jsx",
-        "baseUrl": ".",
-        "paths": {
-            "src/*": [
-                "src/*"
-            ]
-        },
-        "strict": true
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@common/*": ["src/modules/common/*"],
+      "@auth/*": ["src/modules/auth/*"],
+      "@coordinates/*": ["src/modules/coordinates/*"],
+      "@events/*": ["src/modules/events/*"],
+      "@locations/*": ["src/modules/locations/*"],
+      "@persons/*": ["src/modules/persons/*"],
+      "@tickets/*": ["src/modules/tickets/*"],
+      "@users/*": ["src/modules/users/*"],
+      "@venues/*": ["src/modules/venues/*"],
+      "@routes/*": ["src/routes/*"],
+      "@store/*": ["src/store/*"],
+      "@routes": ["src/routes"],
+      "@store": ["src/store"]
     },
-    "include": [
-        "src",
-        "vite-env.d.ts"
-    ],
-    "references": [
-        {
-            "path": "./tsconfig.node.json"
-        }
-    ]
+    "strict": true
+  },
+  "include": ["src", "vite-env.d.ts"],
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ]
 }

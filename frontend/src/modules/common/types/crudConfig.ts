@@ -1,17 +1,27 @@
 // src/modules/common/types/crudConfig.ts
-import type { Column } from 'src/modules/common/components/CrudTable';
+import { ReactNode } from "react";
 
-export interface CrudConfig<T> {
-    entityName: string;
-    columns: Column<T>[];
-    formFields: Array<{
-        key: keyof T;
-        label: string;
-        type: 'text' | 'number' | 'boolean';
-    }>;
+import type { Column } from "@common/components/CrudTable";
 
-    useListQuery: (args: { page: number; size: number; search?: string }) => any;
-    useCreateMutation: () => readonly [any, any];
-    useUpdateMutation: () => readonly [any, any];
-    useDeleteMutation: () => readonly [any, any];
+import { FormFieldConfig } from "./formFieldConfig";
+
+export interface SpecialOperation {
+  key: string;
+  label: string;
+  type: "button" | "modal";
+  variant?: "primary" | "secondary" | "success" | "warning" | "danger" | "info";
+  renderModal?: () => ReactNode;
+  onClick?: () => void;
+}
+
+export interface CrudConfig<T extends { id: number }> {
+  entityName: string;
+  useListQuery: any;
+  useCreateMutation: any;
+  useUpdateMutation: any;
+  useDeleteMutation: any;
+  columns: Column<T>[];
+  formFields: FormFieldConfig<T>[];
+  // Add optional special operations
+  specialOperations?: SpecialOperation[];
 }
