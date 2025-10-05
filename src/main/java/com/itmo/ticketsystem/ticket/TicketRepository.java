@@ -18,12 +18,12 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     @Query("SELECT t FROM Ticket t WHERE t.venue = :venue")
     List<Ticket> findByVenue(@Param("venue") Venue venue);
 
-    @Query("SELECT t FROM Ticket t WHERE t.comment > :comment")
-    List<Ticket> findByCommentGreaterThan(@Param("comment") String comment);
+    @Query("SELECT t FROM Ticket t WHERE LENGTH(t.comment) > :length")
+    List<Ticket> findByCommentLengthGreaterThan(@Param("length") Integer length);
 
     @Query("SELECT t.name, COUNT(t) FROM Ticket t GROUP BY t.name")
     List<Object[]> groupByName();
-
+    
     @Query("SELECT t FROM Ticket t WHERE t.event.id = :eventId")
     List<Ticket> findByEventId(@Param("eventId") Long eventId);
 }

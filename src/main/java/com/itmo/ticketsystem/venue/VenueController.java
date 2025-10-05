@@ -16,7 +16,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequestMapping("/venues")
+@RequestMapping("/api/venues")
 @CrossOrigin(origins = "*")
 public class VenueController {
 

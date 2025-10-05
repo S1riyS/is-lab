@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/coordinates")
+@RequestMapping("/api/coordinates")
 @CrossOrigin(origins = "*")
 public class CoordinatesController {
 

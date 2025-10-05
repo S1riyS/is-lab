@@ -92,3 +92,5 @@ argfile*
 activemq-data/
 classes/
 HELP.md
+
+**/resources/static

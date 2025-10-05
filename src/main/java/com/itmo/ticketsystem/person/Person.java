@@ -3,12 +3,16 @@ package com.itmo.ticketsystem.person;
 import com.itmo.ticketsystem.common.Color;
 import com.itmo.ticketsystem.common.Country;
 import com.itmo.ticketsystem.location.Location;
+import com.itmo.ticketsystem.ticket.Ticket;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "persons", uniqueConstraints = @UniqueConstraint(columnNames = "passport_id"))
@@ -29,7 +33,7 @@ public class Person {
     @Column(name = "hair_color")
     private Color hairColor;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "location_id")
     @NotNull(message = "Location cannot be null")
     private Location location;
@@ -43,4 +47,7 @@ public class Person {
     @Column(name = "nationality")
     @NotNull(message = "Nationality cannot be null")
     private Country nationality;
+
+    @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Ticket> tickets = new ArrayList<>();
 }

@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class TicketService {
@@ -77,7 +78,8 @@ public class TicketService {
 
         // Set coordinates by ID
         if (ticketCreateDto.getCoordinatesId() != null) {
-            Coordinates coordinates = coordinatesRepository.findById(ticketCreateDto.getCoordinatesId())
+            Coordinates coordinates = coordinatesRepository
+                    .findById(ticketCreateDto.getCoordinatesId())
                     .orElseThrow(() -> new NotFoundException(
                             "Coordinates not found with ID: " + ticketCreateDto.getCoordinatesId()));
             ticket.setCoordinates(coordinates);
@@ -85,7 +87,8 @@ public class TicketService {
 
         // Set person by ID
         if (ticketCreateDto.getPersonId() != null) {
-            Person person = personRepository.findById(ticketCreateDto.getPersonId())
+            Person person = personRepository
+                    .findById(ticketCreateDto.getPersonId())
                     .orElseThrow(() -> new NotFoundException(
                             "Person not found with ID: " + ticketCreateDto.getPersonId()));
             ticket.setPerson(person);
@@ -93,7 +96,8 @@ public class TicketService {
 
         // Set event by ID
         if (ticketCreateDto.getEventId() != null) {
-            Event event = eventRepository.findById(ticketCreateDto.getEventId())
+            Event event = eventRepository
+                    .findById(ticketCreateDto.getEventId())
                     .orElseThrow(() -> new NotFoundException(
                             "Event not found with ID: " + ticketCreateDto.getEventId()));
             ticket.setEvent(event);
@@ -101,7 +105,8 @@ public class TicketService {
 
         // Set venue by ID
         if (ticketCreateDto.getVenueId() != null) {
-            Venue venue = venueRepository.findById(ticketCreateDto.getVenueId())
+            Venue venue = venueRepository
+                    .findById(ticketCreateDto.getVenueId())
                     .orElseThrow(() -> new NotFoundException(
                             "Venue not found with ID: " + ticketCreateDto.getVenueId()));
             ticket.setVenue(venue);
@@ -117,7 +122,8 @@ public class TicketService {
             throw new UnauthorizedException("User not authenticated");
         }
 
-        Ticket existingTicket = ticketRepository.findById(id)
+        Ticket existingTicket = ticketRepository
+                .findById(id)
                 .orElseThrow(() -> new NotFoundException("Ticket not found with ID: " + id));
 
         // Check permissions
@@ -131,7 +137,8 @@ public class TicketService {
 
         // Update coordinates by ID
         if (ticketUpdateDto.getCoordinatesId() != null) {
-            Coordinates coordinates = coordinatesRepository.findById(ticketUpdateDto.getCoordinatesId())
+            Coordinates coordinates = coordinatesRepository
+                    .findById(ticketUpdateDto.getCoordinatesId())
                     .orElseThrow(() -> new NotFoundException(
                             "Coordinates not found with ID: " + ticketUpdateDto.getCoordinatesId()));
             existingTicket.setCoordinates(coordinates);
@@ -139,7 +146,8 @@ public class TicketService {
 
         // Update person by ID
         if (ticketUpdateDto.getPersonId() != null) {
-            Person person = personRepository.findById(ticketUpdateDto.getPersonId())
+            Person person = personRepository
+                    .findById(ticketUpdateDto.getPersonId())
                     .orElseThrow(() -> new NotFoundException(
                             "Person not found with ID: " + ticketUpdateDto.getPersonId()));
             existingTicket.setPerson(person);
@@ -147,7 +155,8 @@ public class TicketService {
 
         // Update event by ID
         if (ticketUpdateDto.getEventId() != null) {
-            Event event = eventRepository.findById(ticketUpdateDto.getEventId())
+            Event event = eventRepository
+                    .findById(ticketUpdateDto.getEventId())
                     .orElseThrow(() -> new NotFoundException(
                             "Event not found with ID: " + ticketUpdateDto.getEventId()));
             existingTicket.setEvent(event);
@@ -155,7 +164,8 @@ public class TicketService {
 
         // Update venue by ID
         if (ticketUpdateDto.getVenueId() != null) {
-            Venue venue = venueRepository.findById(ticketUpdateDto.getVenueId())
+            Venue venue = venueRepository
+                    .findById(ticketUpdateDto.getVenueId())
                     .orElseThrow(() -> new NotFoundException(
                             "Venue not found with ID: " + ticketUpdateDto.getVenueId()));
             existingTicket.setVenue(venue);
@@ -198,8 +208,13 @@ public class TicketService {
         return ticketRepository.groupByName();
     }
 
-    public List<Ticket> getTicketsByCommentGreaterThan(String comment) {
-        return ticketRepository.findByCommentGreaterThan(comment);
+    public List<TicketDto> getTicketsByCommentGreaterThan(String comment) {
+        int minLength = comment.length();
+        List<Ticket> tickets = ticketRepository.findByCommentLengthGreaterThan(minLength);
+
+        return tickets.stream()
+                .map(ticketMapper::toDto)
+                .collect(Collectors.toList());
     }
 
     @Transactional

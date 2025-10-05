@@ -20,7 +20,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequestMapping("/tickets")
+@RequestMapping("/api/tickets")
 @CrossOrigin(origins = "*")
 public class TicketController {
 
@@ -35,6 +35,7 @@ public class TicketController {
             @PageableDefault(size = 10, sort = "id") Pageable pageable,
             @RequestParam(required = false) String search) {
         Page<TicketDto> tickets;
+
         if (search != null && !search.trim().isEmpty()) {
             tickets = ticketService.searchTicketsByName(search, pageable);
         } else {
@@ -78,8 +79,8 @@ public class TicketController {
     }
 
     @GetMapping("/special/by-comment")
-    public ResponseEntity<List<Ticket>> getTicketsByCommentGreaterThan(@RequestParam String comment) {
-        List<Ticket> tickets = ticketService.getTicketsByCommentGreaterThan(comment);
+    public ResponseEntity<List<TicketDto>> getTicketsByCommentGreaterThan(@RequestParam String comment) {
+        List<TicketDto> tickets = ticketService.getTicketsByCommentGreaterThan(comment);
         return ResponseEntity.ok(tickets);
     }
 
@@ -90,11 +91,13 @@ public class TicketController {
         User currentUser = getCurrentUser();
 
         // Get the original ticket entity for the discount creation method
-        Ticket originalTicketEntity = ticketService.getTicketEntityById(originalTicketId)
+        Ticket originalTicketEntity = ticketService
+                .getTicketEntityById(originalTicketId)
                 .orElseThrow(() -> new NotFoundException("Original ticket not found with ID: " + originalTicketId));
 
-        TicketDto newTicket = ticketService.createTicketWithDiscount(
-                originalTicketEntity, discountPercent, currentUser);
+        TicketDto newTicket = ticketService
+                .createTicketWithDiscount(originalTicketEntity, discountPercent, currentUser);
+
         return ResponseEntity.ok(newTicket);
     }
 

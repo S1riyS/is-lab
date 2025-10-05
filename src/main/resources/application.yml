@@ -3,7 +3,7 @@ spring:
     name: ticket-management-system
   
   datasource:
-    url: jdbc:postgresql://localhost:5432/is_lab
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:is_lab}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:root}
     driver-class-name: org.postgresql.Driver
@@ -22,15 +22,28 @@ spring:
       name: admin
       password: admin
 
+  # Static resources configuration
+  web:
+    resources:
+      static-locations: 
+        - "classpath:/META-INF/resources/"
+        - "classpath:/resources/"
+        - "classpath:/static/"
+        - "classpath:/public/"
+        - "file:./frontend/dist/"
+      cache:
+        period: 3600
+
 # JWT Configuration
 jwt:
   secret: mySecretKey123456789012345678901234567890
   expiration: 86400000 # 24 hours in milliseconds
 
 server:
-  port: 8080
-  servlet:
-    context-path: /api
+  port: ${SERVER_PORT:8080}
+  
+  # SPA routing
+  forward-headers-strategy: framework
 
 logging:
   level:

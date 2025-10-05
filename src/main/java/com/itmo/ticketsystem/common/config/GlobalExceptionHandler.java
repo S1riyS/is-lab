@@ -43,20 +43,36 @@ public class GlobalExceptionHandler {
     public ResponseEntity<APIErrorResponse> handleHttpMessageNotReadable(
             HttpMessageNotReadableException ex,
             HttpServletRequest request) {
-        
+
         String message = ex.getMessage();
+        String title = "Invalid request format";
+
+        // Handle enum validation errors specifically
         if (message != null && message.contains("Cannot deserialize value of type")) {
-            message = "Invalid value provided for enum. Expected one of: RED, YELLOW, BROWN, WHITE, ORANGE.";
+            if (message.contains("Color")) {
+                message = "Invalid color value. Expected one of: RED, YELLOW, ORANGE, WHITE, BROWN";
+            } else if (message.contains("TicketType")) {
+                message = "Invalid ticket type. Expected one of: VIP, USUAL, BUDGETARY, CHEAP";
+            } else if (message.contains("UserRole")) {
+                message = "Invalid user role. Expected one of: GUEST, USER, ADMIN";
+            } else if (message.contains("VenueType")) {
+                message = "Invalid venue type. Expected one of: OPEN_AREA, CINEMA, STADIUM";
+            } else if (message.contains("Country")) {
+                message = "Invalid country. Expected one of: USA, SPAIN, SOUTH_KOREA, JAPAN";
+            } else {
+                message = "Invalid enum value provided";
+            }
+            title = "Invalid enum value";
         } else {
-            message = "Malformed JSON request.";
+            message = "Malformed JSON request";
         }
 
         APIErrorResponse error = APIErrorResponse.builder()
                 .error(HttpStatus.BAD_REQUEST.name())
-                .title("Invalid request format")
+                .title(title)
                 .details(message)
                 .build();
-        
+
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
@@ -82,4 +98,5 @@ public class GlobalExceptionHandler {
         System.out.println(ex);
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
 }

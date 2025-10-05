@@ -3,6 +3,7 @@ package com.itmo.ticketsystem.coordinates;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.itmo.ticketsystem.ticket.Ticket;
 
 import jakarta.persistence.*;
@@ -32,5 +33,6 @@ public class Coordinates {
     private Float y;
 
     @OneToMany(mappedBy = "coordinates", cascade = CascadeType.ALL, orphanRemoval = true)
+    // @JsonIgnore
     private List<Ticket> tickets = new ArrayList<>();
 }

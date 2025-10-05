@@ -1,5 +1,6 @@
 package com.itmo.ticketsystem.event;
 
+import com.itmo.ticketsystem.ticket.Ticket;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.NotBlank;
@@ -9,6 +10,8 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "events")
@@ -36,4 +39,7 @@ public class Event {
     @Column(name = "description")
     @NotNull(message = "Description cannot be null")
     private String description;
+
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Ticket> tickets = new ArrayList<>();
 }

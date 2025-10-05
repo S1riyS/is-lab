@@ -6,6 +6,7 @@ import com.itmo.ticketsystem.user.User;
 import com.itmo.ticketsystem.user.UserMapper;
 import com.itmo.ticketsystem.user.UserService;
 import com.itmo.ticketsystem.user.dto.UserDto;
+import com.itmo.ticketsystem.common.exceptions.BadRequestException;
 import com.itmo.ticketsystem.common.exceptions.NotFoundException;
 import com.itmo.ticketsystem.common.exceptions.UnauthorizedException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +51,14 @@ public class AuthService {
     }
 
     public AuthenticationDto registerUser(String username, String password, UserRole role) {
+        User isUserExists = userService
+                .findByUsername(username)
+                .orElse(null);
+
+        if (isUserExists != null) {
+            throw new BadRequestException("Registration failed", "Username is already taken");
+        }
+
         User user = userService.createUserEntity(username, password, role);
         String token = jwtService.generateToken(user);
 
