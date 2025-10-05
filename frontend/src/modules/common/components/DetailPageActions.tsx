@@ -80,7 +80,7 @@ export default function DetailPageActions<T extends { id: number }>({
 
   return (
     <>
-      <div className="d-flex gap-2">
+      <div className="d-flex gap-2 justify-content-end">
         <Button
           variant="outline-primary"
           onClick={() => {

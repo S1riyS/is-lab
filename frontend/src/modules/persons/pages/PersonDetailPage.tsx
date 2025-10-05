@@ -4,14 +4,15 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import DetailPageActions from "@common/components/DetailPageActions";
 import EntityDetail, { EntityField } from "@common/components/EntityDetail";
-import { createLocationFields } from "@common/utils/entityFields";
 import { useGetLocationQuery } from "@locations/api/locationsApi";
+import { createLocationFields } from "@locations/config/locationFieldsConfig";
 
 import {
   useDeletePersonMutation,
   useGetPersonQuery,
   useUpdatePersonMutation,
 } from "../api/personsApi";
+import { createPersonFields } from "../config/personFieldsConfig";
 import { personFormFields } from "../config/personFormConfig";
 
 export default function PersonDetailPage() {
@@ -113,7 +114,7 @@ export default function PersonDetailPage() {
   return (
     <Container className="mt-4">
       <Row className="mb-2">
-        <Col>
+        <Col lg={4}>
           <Button
             variant="outline-primary"
             onClick={() => navigate("/persons")}
@@ -121,23 +122,25 @@ export default function PersonDetailPage() {
             ← Back to Persons
           </Button>
         </Col>
-        {person && (
-          <Col className="text-end">
-            <DetailPageActions
-              entity={person}
-              entityName="Person"
-              formFields={personFormFields}
-              useUpdateMutation={useUpdatePersonMutation}
-              useDeleteMutation={useDeletePersonMutation}
-              onDeleteSuccess={() => navigate("/persons")}
-              refetch={refetchPerson}
-            />
-          </Col>
-        )}
+        <Col lg={8}>
+          <div className="d-flex justify-content-end">
+            {person && (
+              <DetailPageActions
+                entity={person}
+                entityName="Person"
+                formFields={personFormFields}
+                useUpdateMutation={useUpdatePersonMutation}
+                useDeleteMutation={useDeletePersonMutation}
+                onDeleteSuccess={() => navigate("/persons")}
+                refetch={refetchPerson}
+              />
+            )}
+          </div>
+        </Col>
       </Row>
 
       <Row>
-        <Col lg={8}>
+        <Col lg={12}>
           <EntityDetail
             title="Person"
             fields={personFields}

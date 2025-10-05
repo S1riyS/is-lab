@@ -4,24 +4,23 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import DetailPageActions from "@common/components/DetailPageActions";
 import EntityDetail, { EntityField } from "@common/components/EntityDetail";
-import {
-  createCoordinatesFields,
-  createEventFields,
-  createLocationFields,
-  createPersonFields,
-  createVenueFields,
-} from "@common/utils/entityFields";
 import { useGetCoordinatesQuery } from "@coordinates/api/coordinatesApi";
+import { createCoordinatesFields } from "@coordinates/config/coordinatesFieldsConfig";
 import { useGetEventQuery } from "@events/api/eventsApi";
+import { createEventFields } from "@events/config/eventFieldsConfig";
 import { useGetLocationQuery } from "@locations/api/locationsApi";
+import { createLocationFields } from "@locations/config/locationFieldsConfig";
 import { useGetPersonQuery } from "@persons/api/personsApi";
+import { createPersonFields } from "@persons/config/personFieldsConfig";
 import { useGetVenueQuery } from "@venues/api/venuesApi";
+import { createVenueFields } from "@venues/config/venueFieldsConfig";
 
 import {
   useDeleteTicketMutation,
   useGetTicketQuery,
   useUpdateTicketMutation,
 } from "../api/ticketsApi";
+import { createTicketFields } from "../config/ticketFieldsConfig";
 import { ticketFormFields } from "../config/ticketFormConfig";
 
 export default function TicketDetailPage() {
@@ -190,30 +189,9 @@ export default function TicketDetailPage() {
 
   // Create ticket fields with nested components
   const ticketFields: EntityField[] = [
-    { key: "id", label: "ID", value: ticket?.id },
-    { key: "name", label: "Name", value: ticket?.name },
-    { key: "price", label: "Price", value: ticket?.price, type: "number" },
-    { key: "type", label: "Type", value: ticket?.type, type: "enum" },
-    {
-      key: "discount",
-      label: "Discount (%)",
-      value: ticket?.discount,
-      type: "number",
-    },
-    { key: "number", label: "Number", value: ticket?.number, type: "number" },
-    { key: "comment", label: "Comment", value: ticket?.comment },
-    {
-      key: "creationDate",
-      label: "Creation Date",
-      value: ticket?.creationDate,
-      type: "date",
-    },
-    {
-      key: "updatedAt",
-      label: "Updated At",
-      value: ticket?.updatedAt,
-      type: "date",
-    },
+    // Base ticket fields
+    ...createTicketFields(ticket),
+    // Required nested components
     {
       key: "person",
       label: "Person",
@@ -226,6 +204,7 @@ export default function TicketDetailPage() {
       value: null,
       nestedComponent: coordinatesComponent,
     },
+    // Optional nested components
     ...(ticket?.eventId
       ? [
           {
@@ -276,7 +255,7 @@ export default function TicketDetailPage() {
   return (
     <Container className="mt-4">
       <Row className="mb-2">
-        <Col>
+        <Col lg={4}>
           <Button
             variant="outline-primary"
             onClick={() => navigate("/tickets")}
@@ -284,23 +263,25 @@ export default function TicketDetailPage() {
             ← Back to Tickets
           </Button>
         </Col>
-        {ticket && (
-          <Col className="text-end">
-            <DetailPageActions
-              entity={ticket}
-              entityName="Ticket"
-              formFields={ticketFormFields}
-              useUpdateMutation={useUpdateTicketMutation}
-              useDeleteMutation={useDeleteTicketMutation}
-              onDeleteSuccess={() => navigate("/tickets")}
-              refetch={refetchTicket}
-            />
-          </Col>
-        )}
+        <Col lg={8}>
+          <div className="d-flex justify-content-end">
+            {ticket && (
+              <DetailPageActions
+                entity={ticket}
+                entityName="Ticket"
+                formFields={ticketFormFields}
+                useUpdateMutation={useUpdateTicketMutation}
+                useDeleteMutation={useDeleteTicketMutation}
+                onDeleteSuccess={() => navigate("/tickets")}
+                refetch={refetchTicket}
+              />
+            )}
+          </div>
+        </Col>
       </Row>
 
       <Row>
-        <Col lg={8}>
+        <Col lg={12}>
           <EntityDetail
             title="Ticket"
             fields={ticketFields}

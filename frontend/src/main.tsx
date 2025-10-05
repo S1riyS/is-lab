@@ -10,6 +10,7 @@ import { ToastContainer } from "react-toastify";
 import store from "@store";
 
 import App from "@/App";
+import "@/styles/dark-mode.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

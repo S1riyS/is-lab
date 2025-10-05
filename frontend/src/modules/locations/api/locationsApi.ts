@@ -1,4 +1,5 @@
 import { baseApi } from "@common/api/baseApi";
+import type { Page, SearchParams } from "@common/api/types";
 
 import type {
   LocationCreateDto,
@@ -6,19 +7,11 @@ import type {
   LocationUpdateDto,
 } from "./types";
 
-export type Page<T> = {
-  content: T[];
-  totalElements: number;
-  totalPages: number;
-  size: number;
-  number: number;
-};
-
 export const locationsApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     listLocations: build.query<
       Page<LocationDto>,
-      { page?: number; size?: number; search?: string } | void
+      SearchParams<LocationDto> | void
     >({
       query: (params) => ({
         url: "/locations",
@@ -26,6 +19,7 @@ export const locationsApi = baseApi.injectEndpoints({
           page: params?.page ?? 0,
           size: params?.size ?? 10,
           search: params?.search,
+          sort: params?.sort,
         },
       }),
       providesTags: (r) => [{ type: "Locations", id: "LIST" }],

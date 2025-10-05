@@ -1,6 +1,7 @@
 // src/modules/events/EventsPage.tsx
 import CrudPage from "@common/components/CrudPage";
 import type { CrudConfig } from "@common/types/crudConfig";
+import { renderDateTime } from "@common/utils/dateUtils";
 
 import {
   useCreateEventMutation,
@@ -18,11 +19,16 @@ const eventsConfig: CrudConfig<EventDto> = {
   useUpdateMutation: useUpdateEventMutation,
   useDeleteMutation: useDeleteEventMutation,
   columns: [
-    { key: "id", header: "ID" },
-    { key: "name", header: "Name" },
-    { key: "date", header: "Date" },
-    { key: "minAge", header: "Min Age" },
-    { key: "description", header: "Description" },
+    { key: "id", header: "ID", sortable: true },
+    { key: "name", header: "Name", sortable: true },
+    {
+      key: "date",
+      header: "Date",
+      sortable: true,
+      render: (row: EventDto) => renderDateTime(row.date),
+    },
+    { key: "minAge", header: "Min Age", sortable: true },
+    { key: "description", header: "Description", sortable: true },
   ],
   formFields: eventFormFields,
 };

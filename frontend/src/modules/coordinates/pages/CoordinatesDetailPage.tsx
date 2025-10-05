@@ -4,13 +4,13 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import DetailPageActions from "@common/components/DetailPageActions";
 import EntityDetail from "@common/components/EntityDetail";
-import { createCoordinatesFields } from "@common/utils/entityFields";
 
 import {
   useDeleteCoordinatesMutation,
   useGetCoordinatesQuery,
   useUpdateCoordinatesMutation,
 } from "../api/coordinatesApi";
+import { createCoordinatesFields } from "../config/coordinatesFieldsConfig";
 import { coordinatesFormFields } from "../config/coordinatesFormConfig";
 
 export default function CoordinatesDetailPage() {
@@ -89,7 +89,7 @@ export default function CoordinatesDetailPage() {
       </Row>
 
       <Row>
-        <Col lg={8}>
+        <Col lg={12}>
           <EntityDetail
             title="Coordinates"
             fields={coordinatesFields}

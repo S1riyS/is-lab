@@ -41,14 +41,6 @@ export type TicketUpdateDto = Partial<Omit<TicketCreateDto, "discount">> & {
   discount?: number;
 };
 
-export type Page<T> = {
-  content: T[];
-  totalElements: number;
-  totalPages: number;
-  size: number;
-  number: number;
-};
-
 export type TicketGroupByNameResponse = [string, number][]; // [name, count]
 
 export type CreateTicketWithDiscountRequest = {

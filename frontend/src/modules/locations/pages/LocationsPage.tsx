@@ -18,11 +18,11 @@ const locationsConfig: CrudConfig<LocationDto> = {
   useUpdateMutation: useUpdateLocationMutation,
   useDeleteMutation: useDeleteLocationMutation,
   columns: [
-    { key: "id", header: "ID" },
-    { key: "x", header: "X" },
-    { key: "y", header: "Y" },
-    { key: "z", header: "Z" },
-    { key: "name", header: "Name" },
+    { key: "id", header: "ID", sortable: true },
+    { key: "x", header: "X", sortable: true },
+    { key: "y", header: "Y", sortable: true },
+    { key: "z", header: "Z", sortable: true },
+    { key: "name", header: "Name", sortable: true },
   ],
   formFields: locationFormFields,
 };

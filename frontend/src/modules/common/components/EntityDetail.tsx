@@ -106,10 +106,10 @@ export default function EntityDetail({
                   </>
                 ) : (
                   <Row className="mb-2">
-                    <Col sm={3}>
+                    <Col sm={2}>
                       <strong>{field.label}:</strong>
                     </Col>
-                    <Col sm={9}>
+                    <Col sm={10}>
                       {field.render ? (
                         field.render(field.value)
                       ) : (
@@ -145,10 +145,10 @@ export default function EntityDetail({
               </>
             ) : (
               <Row className="mb-2">
-                <Col sm={3}>
+                <Col sm={2}>
                   <strong>{field.label}:</strong>
                 </Col>
-                <Col sm={9}>
+                <Col sm={10}>
                   {field.render ? (
                     field.render(field.value)
                   ) : (

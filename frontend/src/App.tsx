@@ -5,6 +5,7 @@ import { IoTicket } from "react-icons/io5";
 import { Link, Route, Routes } from "react-router-dom";
 
 import AuthButtons from "@auth/components/AuthButtons";
+import DarkModeToggle from "@components/DarkModeToggle";
 import routes from "@routes";
 
 export default function App() {
@@ -37,7 +38,10 @@ export default function App() {
                 Coordinates
               </Nav.Link>
             </Nav>
-            <Nav>
+            <Nav className="d-flex align-items-center">
+              <div className="me-3">
+                <DarkModeToggle />
+              </div>
               <AuthButtons />
             </Nav>
           </Navbar.Collapse>

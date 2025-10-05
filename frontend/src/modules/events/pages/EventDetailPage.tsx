@@ -4,13 +4,13 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import DetailPageActions from "@common/components/DetailPageActions";
 import EntityDetail from "@common/components/EntityDetail";
-import { createEventFields } from "@common/utils/entityFields";
 
 import {
   useDeleteEventMutation,
   useGetEventQuery,
   useUpdateEventMutation,
 } from "../api/eventsApi";
+import { createEventFields } from "../config/eventFieldsConfig";
 import { eventFormFields } from "../config/eventFormConfig";
 
 export default function EventDetailPage() {
@@ -60,28 +60,30 @@ export default function EventDetailPage() {
   return (
     <Container className="mt-4">
       <Row className="mb-2">
-        <Col>
+        <Col lg={4}>
           <Button variant="outline-primary" onClick={() => navigate("/events")}>
             ← Back to Events
           </Button>
         </Col>
-        {event && (
-          <Col className="text-end">
-            <DetailPageActions
-              entity={event}
-              entityName="Event"
-              formFields={eventFormFields}
-              useUpdateMutation={useUpdateEventMutation}
-              useDeleteMutation={useDeleteEventMutation}
-              onDeleteSuccess={() => navigate("/events")}
-              refetch={refetchEvent}
-            />
-          </Col>
-        )}
+        <Col lg={8}>
+          <div className="d-flex justify-content-end">
+            {event && (
+              <DetailPageActions
+                entity={event}
+                entityName="Event"
+                formFields={eventFormFields}
+                useUpdateMutation={useUpdateEventMutation}
+                useDeleteMutation={useDeleteEventMutation}
+                onDeleteSuccess={() => navigate("/events")}
+                refetch={refetchEvent}
+              />
+            )}
+          </div>
+        </Col>
       </Row>
 
       <Row>
-        <Col lg={8}>
+        <Col lg={12}>
           <EntityDetail
             title="Event"
             fields={eventFields}

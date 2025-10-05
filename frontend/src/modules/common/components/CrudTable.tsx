@@ -5,6 +5,7 @@ export type Column<T> = {
   key: keyof T | string;
   header: string;
   render?: (row: T) => ReactNode;
+  sortable?: boolean;
 };
 
 type Props<T> = {
@@ -14,6 +15,9 @@ type Props<T> = {
   onDelete?: (row: T) => void;
   onRowClick?: (row: T) => void;
   clickableRows?: boolean;
+  onSort?: (column: string, direction: 'asc' | 'desc') => void;
+  sortColumn?: string;
+  sortDirection?: 'asc' | 'desc';
 };
 
 export default function CrudTable<T extends { id?: number | string }>({
@@ -23,6 +27,9 @@ export default function CrudTable<T extends { id?: number | string }>({
   onDelete,
   onRowClick,
   clickableRows = false,
+  onSort,
+  sortColumn,
+  sortDirection,
 }: Props<T>) {
   return (
     <div className="table-responsive">
@@ -30,8 +37,32 @@ export default function CrudTable<T extends { id?: number | string }>({
         <thead>
           <tr>
             {columns.map((c) => (
-              <th key={String(c.key)} className="px-3 py-2">
-                {c.header}
+              <th
+                key={String(c.key)}
+                className="px-3 py-2"
+                style={{
+                  cursor: c.sortable && onSort ? 'pointer' : 'default',
+                  userSelect: 'none'
+                }}
+                onClick={() => {
+                  if (c.sortable && onSort) {
+                    const columnKey = String(c.key);
+                    const newDirection =
+                      sortColumn === columnKey && sortDirection === 'asc'
+                        ? 'desc'
+                        : 'asc';
+                    onSort(columnKey, newDirection);
+                  }
+                }}
+              >
+                <div className="d-flex align-items-center gap-1">
+                  <span>{c.header}</span>
+                  {c.sortable && onSort && sortColumn === String(c.key) && (
+                    <span className="text-muted">
+                      {sortDirection === 'asc' ? '↑' : '↓'}
+                    </span>
+                  )}
+                </div>
               </th>
             ))}
             {(onEdit || onDelete) && <th className="px-3 py-2">Actions</th>}

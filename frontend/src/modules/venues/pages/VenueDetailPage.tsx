@@ -4,13 +4,13 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import DetailPageActions from "@common/components/DetailPageActions";
 import EntityDetail from "@common/components/EntityDetail";
-import { createVenueFields } from "@common/utils/entityFields";
 
 import {
   useDeleteVenueMutation,
   useGetVenueQuery,
   useUpdateVenueMutation,
 } from "../api/venuesApi";
+import { createVenueFields } from "../config/venueFieldsConfig";
 import { venueFormFields } from "../config/venueFormConfig";
 
 export default function VenueDetailPage() {
@@ -57,28 +57,30 @@ export default function VenueDetailPage() {
   return (
     <Container className="mt-4">
       <Row className="mb-2">
-        <Col>
+        <Col lg={4}>
           <Button variant="outline-primary" onClick={() => navigate("/venues")}>
             ← Back to Venues
           </Button>
         </Col>
-        {venue && (
-          <Col className="text-end">
-            <DetailPageActions
-              entity={venue}
-              entityName="Venue"
-              formFields={venueFormFields}
-              useUpdateMutation={useUpdateVenueMutation}
-              useDeleteMutation={useDeleteVenueMutation}
-              onDeleteSuccess={() => navigate("/venues")}
-              refetch={refetchVenue}
-            />
-          </Col>
-        )}
+        <Col lg={8}>
+          <div className="d-flex justify-content-end">
+            {venue && (
+              <DetailPageActions
+                entity={venue}
+                entityName="Venue"
+                formFields={venueFormFields}
+                useUpdateMutation={useUpdateVenueMutation}
+                useDeleteMutation={useDeleteVenueMutation}
+                onDeleteSuccess={() => navigate("/venues")}
+                refetch={refetchVenue}
+              />
+            )}
+          </div>
+        </Col>
       </Row>
 
       <Row>
-        <Col lg={8}>
+        <Col lg={12}>
           <EntityDetail
             title="Venue"
             fields={venueFields}

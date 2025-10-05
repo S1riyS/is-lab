@@ -17,11 +17,11 @@ const usersConfig: CrudConfig<UserDto> = {
   useUpdateMutation: useUpdateUserMutation,
   useDeleteMutation: useDeleteUserMutation,
   columns: [
-    { key: "id", header: "ID" },
-    { key: "username", header: "Username" },
-    { key: "role", header: "Role" },
-    { key: "createdAt", header: "Created" },
-    { key: "isActive", header: "Active" },
+    { key: "id", header: "ID", sortable: true },
+    { key: "username", header: "Username", sortable: true },
+    { key: "role", header: "Role", sortable: true },
+    { key: "createdAt", header: "Created", sortable: true },
+    { key: "isActive", header: "Active", sortable: true },
   ],
   formFields: [
     {

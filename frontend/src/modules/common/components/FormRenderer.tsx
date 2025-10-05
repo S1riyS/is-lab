@@ -36,8 +36,13 @@ export function FormRenderer<T>({
       // Handle both ISO strings and partial dates
       const date = new Date(value);
       if (isNaN(date.getTime())) return value;
-      // Return in format suitable for datetime-local input
-      return date.toISOString().slice(0, 16);
+      // Return in local time format suitable for datetime-local input
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
     } catch {
       return value || "";
     }
@@ -47,7 +52,9 @@ export function FormRenderer<T>({
     if (!value) return null;
     try {
       // Convert datetime-local format to ISO string
-      return new Date(value).toISOString();
+      // The datetime-local input provides local time, so we need to convert it properly
+      const localDate = new Date(value);
+      return localDate.toISOString();
     } catch {
       return value;
     }

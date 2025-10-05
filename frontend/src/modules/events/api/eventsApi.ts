@@ -1,20 +1,13 @@
 import { baseApi } from "@common/api/baseApi";
+import type { Page, SearchParams } from "@common/api/types";
 
 import type { EventCreateDto, EventDto, EventUpdateDto } from "./types";
-
-export type Page<T> = {
-  content: T[];
-  totalElements: number;
-  totalPages: number;
-  size: number;
-  number: number;
-};
 
 export const eventsApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     listEvents: build.query<
       Page<EventDto>,
-      { page?: number; size?: number; search?: string } | void
+      SearchParams<EventDto> | void
     >({
       query: (params) => ({
         url: "/events",
@@ -22,6 +15,7 @@ export const eventsApi = baseApi.injectEndpoints({
           page: params?.page ?? 0,
           size: params?.size ?? 10,
           search: params?.search,
+          sort: params?.sort,
         },
       }),
       providesTags: (r) => [{ type: "Events", id: "LIST" }],

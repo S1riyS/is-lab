@@ -24,8 +24,14 @@
       "@venues/*": ["src/modules/venues/*"],
       "@routes/*": ["src/routes/*"],
       "@store/*": ["src/store/*"],
+      "@contexts/*": ["src/contexts/*"],
+      "@components/*": ["src/components/*"],
+      "@hooks/*": ["src/hooks/*"],
       "@routes": ["src/routes"],
-      "@store": ["src/store"]
+      "@store": ["src/store"],
+      "@contexts": ["src/contexts"],
+      "@components": ["src/components"],
+      "@hooks": ["src/hooks"]
     },
     "strict": true
   },

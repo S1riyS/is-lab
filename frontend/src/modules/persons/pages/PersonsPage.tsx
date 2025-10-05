@@ -18,12 +18,12 @@ const personsConfig: CrudConfig<PersonDto> = {
   useUpdateMutation: useUpdatePersonMutation,
   useDeleteMutation: useDeletePersonMutation,
   columns: [
-    { key: "id", header: "ID" },
-    { key: "eyeColor", header: "Eye Color" },
-    { key: "hairColor", header: "Hair Color" },
-    { key: "locationId", header: "Location ID" },
-    { key: "passportID", header: "Passport ID" },
-    { key: "nationality", header: "Nationality" },
+    { key: "id", header: "ID", sortable: true },
+    { key: "eyeColor", header: "Eye Color", sortable: true },
+    { key: "hairColor", header: "Hair Color", sortable: true },
+    { key: "locationId", header: "Location ID", sortable: true },
+    { key: "passportID", header: "Passport ID", sortable: true },
+    { key: "nationality", header: "Nationality", sortable: true },
   ],
   formFields: personFormFields,
 };

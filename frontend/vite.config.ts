@@ -19,6 +19,9 @@ export default defineConfig({
       "@venues": path.resolve(__dirname, "./src/modules/venues"),
       "@routes": path.resolve(__dirname, "./src/routes"),
       "@store": path.resolve(__dirname, "./src/store"),
+      "@contexts": path.resolve(__dirname, "./src/contexts"),
+      "@components": path.resolve(__dirname, "./src/components"),
+      "@hooks": path.resolve(__dirname, "./src/hooks"),
     },
   },
 });

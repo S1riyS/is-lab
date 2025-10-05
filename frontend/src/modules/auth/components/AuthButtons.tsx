@@ -12,6 +12,7 @@ import {
   ModalTitle,
   Stack,
 } from "react-bootstrap";
+import { FaUser } from "react-icons/fa";
 import { useSelector } from "react-redux";
 
 import { showErrorToast } from "@common/api/baseApi";
@@ -63,9 +64,9 @@ export default function AuthButtons() {
 
   if (auth.user) {
     return (
-      <Stack direction="horizontal" gap={2} className="align-items-center">
+      <Stack direction="horizontal" gap={3} className="align-items-center">
         <span>
-          {auth.user.username} <Badge bg="secondary">{auth.user.role}</Badge>
+          <FaUser /> {auth.user.username}
         </span>
         <Button variant="outline-danger" size="sm" onClick={handleLogout}>
           Log out
@@ -185,17 +186,6 @@ export default function AuthButtons() {
                   setRegisterForm({ ...registerForm, password: e.target.value })
                 }
                 required
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Role</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="USER"
-                value={registerForm.role}
-                onChange={(e) =>
-                  setRegisterForm({ ...registerForm, role: e.target.value })
-                }
               />
             </Form.Group>
           </Form>

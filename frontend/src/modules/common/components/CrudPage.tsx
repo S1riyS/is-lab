@@ -15,6 +15,8 @@ import {
   Row,
   Stack,
 } from "react-bootstrap";
+import { IoIosAddCircle, IoMdCreate } from "react-icons/io";
+import { MdAdd } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 
 import { showErrorToast } from "@common/api/baseApi";
@@ -34,10 +36,16 @@ export default function CrudPage<T extends { id: number }>({
   const [page, setPage] = useState(0);
   const [size] = useState(10);
   const [search, setSearch] = useState("");
+  const [sortColumn, setSortColumn] = useState<string>("");
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  const sortParam = sortColumn ? `${sortColumn},${sortDirection}` : undefined;
+
   const { data, isLoading, refetch } = config.useListQuery({
     page,
     size,
     search: search || undefined,
+    sort: sortParam,
   });
 
   const [create] = config.useCreateMutation();
@@ -116,6 +124,12 @@ export default function CrudPage<T extends { id: number }>({
     navigate(`/${routeName}/${row.id}`);
   };
 
+  const handleSort = (column: string, direction: 'asc' | 'desc') => {
+    setSortColumn(column);
+    setSortDirection(direction);
+    setPage(0); // Reset to first page when sorting
+  };
+
   return (
     <Stack gap={3}>
       <h2>{config.entityName}s</h2>
@@ -136,7 +150,7 @@ export default function CrudPage<T extends { id: number }>({
         </Col>
         <Col xs="auto">
           <Button variant="primary" onClick={() => setShowCreate(true)}>
-            Create
+            <IoMdCreate /> Create
           </Button>
         </Col>
       </Row>
@@ -154,6 +168,9 @@ export default function CrudPage<T extends { id: number }>({
             onDelete={handleDelete}
             onRowClick={handleRowClick}
             clickableRows={true}
+            onSort={handleSort}
+            sortColumn={sortColumn}
+            sortDirection={sortDirection}
           />
           <Stack direction="horizontal" gap={2} className="align-items-center">
             <Button

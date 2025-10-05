@@ -4,13 +4,13 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import DetailPageActions from "@common/components/DetailPageActions";
 import EntityDetail from "@common/components/EntityDetail";
-import { createLocationFields } from "@common/utils/entityFields";
 
 import {
   useDeleteLocationMutation,
   useGetLocationQuery,
   useUpdateLocationMutation,
 } from "../api/locationsApi";
+import { createLocationFields } from "../config/locationFieldsConfig";
 import { locationFormFields } from "../config/locationFormConfig";
 
 export default function LocationDetailPage() {
@@ -63,7 +63,7 @@ export default function LocationDetailPage() {
   return (
     <Container className="mt-4">
       <Row className="mb-2">
-        <Col>
+        <Col lg={4}>
           <Button
             variant="outline-primary"
             onClick={() => navigate("/locations")}
@@ -71,23 +71,25 @@ export default function LocationDetailPage() {
             ← Back to Locations
           </Button>
         </Col>
-        {location && (
-          <Col className="text-end">
-            <DetailPageActions
-              entity={location}
-              entityName="Location"
-              formFields={locationFormFields}
-              useUpdateMutation={useUpdateLocationMutation}
-              useDeleteMutation={useDeleteLocationMutation}
-              onDeleteSuccess={() => navigate("/locations")}
-              refetch={refetchLocation}
-            />
-          </Col>
-        )}
+        <Col lg={8}>
+          <div className="d-flex justify-content-end">
+            {location && (
+              <DetailPageActions
+                entity={location}
+                entityName="Location"
+                formFields={locationFormFields}
+                useUpdateMutation={useUpdateLocationMutation}
+                useDeleteMutation={useDeleteLocationMutation}
+                onDeleteSuccess={() => navigate("/locations")}
+                refetch={refetchLocation}
+              />
+            )}
+          </div>
+        </Col>
       </Row>
 
       <Row>
-        <Col lg={8}>
+        <Col lg={12}>
           <EntityDetail
             title="Location"
             fields={locationFields}

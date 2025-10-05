@@ -18,10 +18,10 @@ const venuesConfig: CrudConfig<VenueDto> = {
   useUpdateMutation: useUpdateVenueMutation,
   useDeleteMutation: useDeleteVenueMutation,
   columns: [
-    { key: "id", header: "ID" },
-    { key: "name", header: "Name" },
-    { key: "capacity", header: "Capacity" },
-    { key: "type", header: "Type" },
+    { key: "id", header: "ID", sortable: true },
+    { key: "name", header: "Name", sortable: true },
+    { key: "capacity", header: "Capacity", sortable: true },
+    { key: "type", header: "Type", sortable: true },
   ],
   formFields: venueFormFields,
 };

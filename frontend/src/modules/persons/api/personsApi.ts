@@ -1,20 +1,13 @@
 import { baseApi } from "@common/api/baseApi";
+import type { Page, SearchParams } from "@common/api/types";
 
 import type { PersonCreateDto, PersonDto, PersonUpdateDto } from "./types";
-
-export type Page<T> = {
-  content: T[];
-  totalElements: number;
-  totalPages: number;
-  size: number;
-  number: number;
-};
 
 export const personsApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     listPersons: build.query<
       Page<PersonDto>,
-      { page?: number; size?: number; search?: string } | void
+      SearchParams<PersonDto> | void
     >({
       query: (params) => ({
         url: "/persons",
@@ -22,6 +15,7 @@ export const personsApi = baseApi.injectEndpoints({
           page: params?.page ?? 0,
           size: params?.size ?? 10,
           search: params?.search,
+          sort: params?.sort,
         },
       }),
       providesTags: (r) => [{ type: "Persons", id: "LIST" }],

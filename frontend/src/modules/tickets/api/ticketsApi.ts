@@ -1,10 +1,10 @@
 import { baseApi } from "@common/api/baseApi";
+import type { Page, SearchParams } from "@common/api/types";
 
 import type {
   CancelEventRequest,
   CreateTicketWithDiscountRequest,
   DeleteResponse,
-  Page,
   TicketCreateDto,
   TicketDto,
   TicketGroupByNameResponse,
@@ -15,7 +15,7 @@ export const ticketsApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     listTickets: build.query<
       Page<TicketDto>,
-      { page?: number; size?: number; search?: string } | void
+      SearchParams<TicketDto> | void
     >({
       query: (params) => ({
         url: "/tickets",
@@ -23,6 +23,7 @@ export const ticketsApi = baseApi.injectEndpoints({
           page: params?.page ?? 0,
           size: params?.size ?? 10,
           search: params?.search,
+          sort: params?.sort,
         },
       }),
       providesTags: (r) => [{ type: "Tickets", id: "LIST" }],

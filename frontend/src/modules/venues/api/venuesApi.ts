@@ -1,20 +1,13 @@
 import { baseApi } from "@common/api/baseApi";
+import type { Page, SearchParams } from "@common/api/types";
 
 import type { VenueCreateDto, VenueDto, VenueUpdateDto } from "./types";
-
-export type Page<T> = {
-  content: T[];
-  totalElements: number;
-  totalPages: number;
-  size: number;
-  number: number;
-};
 
 export const venuesApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     listVenues: build.query<
       Page<VenueDto>,
-      { page?: number; size?: number; search?: string } | void
+      SearchParams<VenueDto> | void
     >({
       query: (params) => ({
         url: "/venues",
@@ -22,6 +15,7 @@ export const venuesApi = baseApi.injectEndpoints({
           page: params?.page ?? 0,
           size: params?.size ?? 10,
           search: params?.search,
+          sort: params?.sort,
         },
       }),
       providesTags: (r) => [{ type: "Venues", id: "LIST" }],

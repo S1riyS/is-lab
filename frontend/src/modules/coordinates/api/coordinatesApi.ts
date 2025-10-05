@@ -1,4 +1,5 @@
 import { baseApi } from "@common/api/baseApi";
+import type { Page, SearchParams } from "@common/api/types";
 
 import type {
   CoordinatesCreateDto,
@@ -6,19 +7,11 @@ import type {
   CoordinatesUpdateDto,
 } from "./types";
 
-export type Page<T> = {
-  content: T[];
-  totalElements: number;
-  totalPages: number;
-  size: number;
-  number: number;
-};
-
 export const coordinatesApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     listCoordinates: build.query<
       Page<CoordinatesDto>,
-      { page?: number; size?: number; search?: string } | void
+      SearchParams<CoordinatesDto> | void
     >({
       query: (params) => ({
         url: "/coordinates",
@@ -26,6 +19,7 @@ export const coordinatesApi = baseApi.injectEndpoints({
           page: params?.page ?? 0,
           size: params?.size ?? 10,
           search: params?.search,
+          sort: params?.sort,
         },
       }),
       providesTags: (r) => [{ type: "Coordinates", id: "LIST" }],

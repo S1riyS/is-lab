@@ -18,9 +18,9 @@ const coordinatesConfig: CrudConfig<CoordinatesDto> = {
   useUpdateMutation: useUpdateCoordinatesMutation,
   useDeleteMutation: useDeleteCoordinatesMutation,
   columns: [
-    { key: "id", header: "ID" },
-    { key: "x", header: "X" },
-    { key: "y", header: "Y" },
+    { key: "id", header: "ID", sortable: true },
+    { key: "x", header: "X", sortable: true },
+    { key: "y", header: "Y", sortable: true },
   ],
   formFields: coordinatesFormFields,
 };
