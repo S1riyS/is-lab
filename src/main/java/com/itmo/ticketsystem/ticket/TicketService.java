@@ -17,6 +17,9 @@ import com.itmo.ticketsystem.common.dto.DeleteResponse;
 import com.itmo.ticketsystem.common.exceptions.NotFoundException;
 import com.itmo.ticketsystem.common.exceptions.ForbiddenException;
 import com.itmo.ticketsystem.common.exceptions.UnauthorizedException;
+import com.itmo.ticketsystem.common.ws.ChangeEventPublisher;
+import com.itmo.ticketsystem.common.ws.ChangeEvent;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -47,6 +50,9 @@ public class TicketService {
 
     @Autowired
     private TicketMapper ticketMapper;
+
+    @Autowired
+    private ChangeEventPublisher changeEventPublisher;
 
     public Page<TicketDto> getAllTickets(Pageable pageable) {
         return ticketRepository.findAll(pageable).map(ticketMapper::toDto);
@@ -113,7 +119,10 @@ public class TicketService {
         }
 
         Ticket savedTicket = ticketRepository.save(ticket);
-        return ticketMapper.toDto(savedTicket);
+        TicketDto dto = ticketMapper.toDto(savedTicket);
+        changeEventPublisher.publish("tickets", ChangeEvent.Operation.CREATE,
+                dto.getId());
+        return dto;
     }
 
     @Transactional
@@ -174,7 +183,10 @@ public class TicketService {
         existingTicket.setUpdatedBy(currentUser);
 
         Ticket savedTicket = ticketRepository.save(existingTicket);
-        return ticketMapper.toDto(savedTicket);
+        TicketDto dto = ticketMapper.toDto(savedTicket);
+        changeEventPublisher.publish("tickets", ChangeEvent.Operation.UPDATE,
+                dto.getId());
+        return dto;
     }
 
     @Transactional
@@ -193,6 +205,7 @@ public class TicketService {
         }
 
         ticketRepository.deleteById(id);
+        changeEventPublisher.publish("tickets", ChangeEvent.Operation.DELETE, id);
         return DeleteResponse.builder()
                 .message("Ticket deleted successfully")
                 .build();

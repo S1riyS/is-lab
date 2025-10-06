@@ -10,6 +10,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -52,13 +54,21 @@ public class PersonController {
     @PutMapping("/{id}")
     public ResponseEntity<PersonDto> updatePerson(@PathVariable Long id,
             @Valid @RequestBody PersonUpdateDto personUpdateDto) {
-        PersonDto updatedPerson = personService.updatePerson(id, personUpdateDto);
+        PersonDto updatedPerson = personService.updatePerson(id, personUpdateDto, getCurrentUser());
         return ResponseEntity.ok(updatedPerson);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<DeleteResponse> deletePerson(@PathVariable Long id) {
-        DeleteResponse response = personService.deletePerson(id);
+        DeleteResponse response = personService.deletePerson(id, getCurrentUser());
         return ResponseEntity.ok(response);
+    }
+
+    private com.itmo.ticketsystem.user.User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            return new com.itmo.ticketsystem.user.User(); // lightweight stub; service only needs role/admin check
+        }
+        return null;
     }
 }

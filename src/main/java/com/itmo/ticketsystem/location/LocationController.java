@@ -10,6 +10,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -52,13 +54,21 @@ public class LocationController {
     @PutMapping("/{id}")
     public ResponseEntity<LocationDto> updateLocation(@PathVariable Long id,
             @Valid @RequestBody LocationUpdateDto locationUpdateDto) {
-        LocationDto updatedLocation = locationService.updateLocation(id, locationUpdateDto);
+        LocationDto updatedLocation = locationService.updateLocation(id, locationUpdateDto, getCurrentUser());
         return ResponseEntity.ok(updatedLocation);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<DeleteResponse> deleteLocation(@PathVariable Long id) {
-        DeleteResponse response = locationService.deleteLocation(id);
+        DeleteResponse response = locationService.deleteLocation(id, getCurrentUser());
         return ResponseEntity.ok(response);
+    }
+
+    private com.itmo.ticketsystem.user.User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            return new com.itmo.ticketsystem.user.User();
+        }
+        return null;
     }
 }

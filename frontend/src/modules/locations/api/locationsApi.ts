@@ -41,7 +41,10 @@ export const locationsApi = baseApi.injectEndpoints({
     }),
     deleteLocation: build.mutation<{ message: string }, number>({
       query: (id) => ({ url: `/locations/${id}`, method: "DELETE" }),
-      invalidatesTags: [{ type: "Locations", id: "LIST" }],
+      invalidatesTags: [
+        { type: "Locations", id: "LIST" },
+        { type: "Persons", id: "LIST" },
+      ],
     }),
     getLocation: build.query<LocationDto, number>({
       query: (id) => ({ url: `/locations/${id}` }),

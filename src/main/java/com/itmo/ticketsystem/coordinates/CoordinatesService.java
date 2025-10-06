@@ -5,11 +5,17 @@ import com.itmo.ticketsystem.coordinates.dto.CoordinatesDto;
 import com.itmo.ticketsystem.coordinates.dto.CoordinatesUpdateDto;
 import com.itmo.ticketsystem.common.dto.DeleteResponse;
 import com.itmo.ticketsystem.common.exceptions.NotFoundException;
+import com.itmo.ticketsystem.common.ws.ChangeEventPublisher;
+import com.itmo.ticketsystem.common.ws.ChangeEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.itmo.ticketsystem.user.User;
+import com.itmo.ticketsystem.common.UserRole;
+import com.itmo.ticketsystem.common.exceptions.UnauthorizedException;
+import com.itmo.ticketsystem.common.exceptions.ForbiddenException;
 
 @Service
 public class CoordinatesService {
@@ -19,6 +25,9 @@ public class CoordinatesService {
 
     @Autowired
     private CoordinatesMapper coordinatesMapper;
+
+    @Autowired
+    private ChangeEventPublisher changeEventPublisher;
 
     public Page<CoordinatesDto> getAllCoordinates(Pageable pageable) {
         return coordinatesRepository.findAll(pageable).map(coordinatesMapper::toDto);
@@ -34,25 +43,42 @@ public class CoordinatesService {
     public CoordinatesDto createCoordinates(CoordinatesCreateDto coordinatesCreateDto) {
         Coordinates coordinates = coordinatesMapper.toEntity(coordinatesCreateDto);
         Coordinates savedCoordinates = coordinatesRepository.save(coordinates);
-        return coordinatesMapper.toDto(savedCoordinates);
+        CoordinatesDto dto = coordinatesMapper.toDto(savedCoordinates);
+        changeEventPublisher.publish("coordinates", ChangeEvent.Operation.CREATE, dto.getId());
+        return dto;
     }
 
     @Transactional
-    public CoordinatesDto updateCoordinates(Long id, CoordinatesUpdateDto coordinatesUpdateDto) {
+    public CoordinatesDto updateCoordinates(Long id, CoordinatesUpdateDto coordinatesUpdateDto, User currentUser) {
+        if (currentUser == null) {
+            throw new UnauthorizedException("User not authenticated");
+        }
+        if (!currentUser.getRole().equals(UserRole.ADMIN)) {
+            throw new ForbiddenException("Admin role required");
+        }
         Coordinates existingCoordinates = coordinatesRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Coordinates not found with ID: " + id));
 
         coordinatesMapper.updateEntity(existingCoordinates, coordinatesUpdateDto);
         Coordinates savedCoordinates = coordinatesRepository.save(existingCoordinates);
-        return coordinatesMapper.toDto(savedCoordinates);
+        CoordinatesDto dto = coordinatesMapper.toDto(savedCoordinates);
+        changeEventPublisher.publish("coordinates", ChangeEvent.Operation.UPDATE, dto.getId());
+        return dto;
     }
 
     @Transactional
-    public DeleteResponse deleteCoordinates(Long id) {
+    public DeleteResponse deleteCoordinates(Long id, User currentUser) {
+        if (currentUser == null) {
+            throw new UnauthorizedException("User not authenticated");
+        }
+        if (!currentUser.getRole().equals(UserRole.ADMIN)) {
+            throw new ForbiddenException("Admin role required");
+        }
         if (!coordinatesRepository.existsById(id)) {
             throw new NotFoundException("Coordinates not found with ID: " + id);
         }
         coordinatesRepository.deleteById(id);
+        changeEventPublisher.publish("coordinates", ChangeEvent.Operation.DELETE, id);
         return DeleteResponse.builder()
                 .message("Coordinates deleted successfully")
                 .build();

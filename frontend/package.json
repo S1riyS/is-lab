@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.2.5",
+    "@stomp/stompjs": "^7.2.0",
     "@types/react-redux": "^7.1.34",
     "bootstrap": "^5.3.8",
     "react": "^18.2.0",
@@ -21,6 +22,8 @@
     "react-redux": "^9.2.0",
     "react-router-dom": "^6.24.0",
     "react-toastify": "^11.0.5",
+    "sockjs-client": "^1.6.1",
+    "stompjs": "^2.3.3",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -28,6 +31,7 @@
     "@types/node": "^24.6.2",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
+    "@types/sockjs-client": "^1.5.4",
     "@vitejs/plugin-react": "^4.3.1",
     "eslint": "^8.57.0",
     "eslint-plugin-react": "^7.34.1",

@@ -8,6 +8,7 @@ import { BrowserRouter } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 
 import store from "@store";
+import { initSync } from "@common/ws/sync";
 
 import App from "@/App";
 import "@/styles/dark-mode.css";
@@ -22,3 +23,11 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     </Provider>
   </React.StrictMode>,
 );
+
+// Initialize WebSocket synchronization after store is ready
+try {
+  initSync(store);
+} catch (e) {
+  // eslint-disable-next-line no-console
+  console.error("Failed to init websocket sync", e);
+}

@@ -53,6 +53,10 @@ export const ticketsApi = baseApi.injectEndpoints({
         { type: "Tickets", id: "LIST" },
         { type: "Tickets", id: "GROUP" },
         { type: "Tickets", id: "COMMENT" },
+        { type: "Persons", id: "LIST" },
+        { type: "Events", id: "LIST" },
+        { type: "Venues", id: "LIST" },
+        { type: "Coordinates", id: "LIST" },
       ],
     }),
     getTicket: build.query<TicketDto, number>({
