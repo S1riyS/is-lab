@@ -47,6 +47,11 @@ dependencies {
     implementation 'org.apache.commons:commons-lang3'
     implementation 'commons-codec:commons-codec:1.16.0'
     
+    // MapStruct for DTO mapping
+    implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+    annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+    
     // Development
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
