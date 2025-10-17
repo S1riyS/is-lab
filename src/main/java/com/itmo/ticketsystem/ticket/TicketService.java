@@ -4,23 +4,17 @@ import com.itmo.ticketsystem.ticket.dto.TicketCreateDto;
 import com.itmo.ticketsystem.ticket.dto.TicketDto;
 import com.itmo.ticketsystem.ticket.dto.TicketUpdateDto;
 import com.itmo.ticketsystem.event.Event;
-import com.itmo.ticketsystem.event.EventRepository;
 import com.itmo.ticketsystem.user.User;
-import com.itmo.ticketsystem.common.UserRole;
 import com.itmo.ticketsystem.venue.Venue;
 import com.itmo.ticketsystem.venue.VenueRepository;
-import com.itmo.ticketsystem.person.Person;
-import com.itmo.ticketsystem.person.PersonRepository;
-import com.itmo.ticketsystem.coordinates.Coordinates;
-import com.itmo.ticketsystem.coordinates.CoordinatesRepository;
 import com.itmo.ticketsystem.common.dto.DeleteResponse;
 import com.itmo.ticketsystem.common.exceptions.NotFoundException;
-import com.itmo.ticketsystem.common.exceptions.ForbiddenException;
-import com.itmo.ticketsystem.common.exceptions.UnauthorizedException;
+import com.itmo.ticketsystem.common.security.AuthorizationService;
+import com.itmo.ticketsystem.common.service.EntityResolutionService;
 import com.itmo.ticketsystem.common.ws.ChangeEventPublisher;
 import com.itmo.ticketsystem.common.ws.ChangeEvent;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -31,28 +25,15 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class TicketService {
 
-    @Autowired
-    private TicketRepository ticketRepository;
-
-    @Autowired
-    private VenueRepository venueRepository;
-
-    @Autowired
-    private EventRepository eventRepository;
-
-    @Autowired
-    private PersonRepository personRepository;
-
-    @Autowired
-    private CoordinatesRepository coordinatesRepository;
-
-    @Autowired
-    private TicketMapper ticketMapper;
-
-    @Autowired
-    private ChangeEventPublisher changeEventPublisher;
+    private final TicketRepository ticketRepository;
+    private final VenueRepository venueRepository;
+    private final TicketMapper ticketMapper;
+    private final ChangeEventPublisher changeEventPublisher;
+    private final AuthorizationService authorizationService;
+    private final EntityResolutionService entityResolutionService;
 
     public Page<TicketDto> getAllTickets(Pageable pageable) {
         return ticketRepository.findAll(pageable).map(ticketMapper::toDto);
@@ -74,135 +55,66 @@ public class TicketService {
 
     @Transactional
     public TicketDto createTicket(TicketCreateDto ticketCreateDto, User currentUser) {
-        if (currentUser == null) {
-            throw new UnauthorizedException("User not authenticated");
-        }
+        authorizationService.requireAuthenticated(currentUser);
 
         Ticket ticket = ticketMapper.toEntity(ticketCreateDto);
         ticket.setCreatedBy(currentUser);
         ticket.setUpdatedBy(currentUser);
 
-        // Set coordinates by ID
-        if (ticketCreateDto.getCoordinatesId() != null) {
-            Coordinates coordinates = coordinatesRepository
-                    .findById(ticketCreateDto.getCoordinatesId())
-                    .orElseThrow(() -> new NotFoundException(
-                            "Coordinates not found with ID: " + ticketCreateDto.getCoordinatesId()));
-            ticket.setCoordinates(coordinates);
-        }
-
-        // Set person by ID
-        if (ticketCreateDto.getPersonId() != null) {
-            Person person = personRepository
-                    .findById(ticketCreateDto.getPersonId())
-                    .orElseThrow(() -> new NotFoundException(
-                            "Person not found with ID: " + ticketCreateDto.getPersonId()));
-            ticket.setPerson(person);
-        }
-
-        // Set event by ID
-        if (ticketCreateDto.getEventId() != null) {
-            Event event = eventRepository
-                    .findById(ticketCreateDto.getEventId())
-                    .orElseThrow(() -> new NotFoundException(
-                            "Event not found with ID: " + ticketCreateDto.getEventId()));
-            ticket.setEvent(event);
-        }
-
-        // Set venue by ID
-        if (ticketCreateDto.getVenueId() != null) {
-            Venue venue = venueRepository
-                    .findById(ticketCreateDto.getVenueId())
-                    .orElseThrow(() -> new NotFoundException(
-                            "Venue not found with ID: " + ticketCreateDto.getVenueId()));
-            ticket.setVenue(venue);
-        }
+        // Resolve entity relationships using the centralized service
+        ticket.setCoordinates(entityResolutionService.resolveCoordinates(ticketCreateDto.getCoordinatesId()));
+        ticket.setPerson(entityResolutionService.resolvePerson(ticketCreateDto.getPersonId()));
+        ticket.setEvent(entityResolutionService.resolveEventOptional(ticketCreateDto.getEventId()));
+        ticket.setVenue(entityResolutionService.resolveVenueOptional(ticketCreateDto.getVenueId()));
 
         Ticket savedTicket = ticketRepository.save(ticket);
         TicketDto dto = ticketMapper.toDto(savedTicket);
-        changeEventPublisher.publish("tickets", ChangeEvent.Operation.CREATE,
-                dto.getId());
+        changeEventPublisher.publish("tickets", ChangeEvent.Operation.CREATE, dto.getId());
         return dto;
     }
 
     @Transactional
     public TicketDto updateTicket(Long id, TicketUpdateDto ticketUpdateDto, User currentUser) {
-        if (currentUser == null) {
-            throw new UnauthorizedException("User not authenticated");
-        }
-
         Ticket existingTicket = ticketRepository
                 .findById(id)
                 .orElseThrow(() -> new NotFoundException("Ticket not found with ID: " + id));
 
-        // Check permissions
-        if (!UserRole.ADMIN.equals(currentUser.getRole()) &&
-                !existingTicket.getCreatedBy().getId().equals(currentUser.getId())) {
-            throw new ForbiddenException("You don't have permission to update this ticket");
-        }
+        // Check permissions using centralized authorization service
+        authorizationService.requireCanModify(currentUser, existingTicket.getCreatedBy().getId());
 
         // Update fields using mapper
         ticketMapper.updateEntity(existingTicket, ticketUpdateDto);
 
-        // Update coordinates by ID
+        // Update entity relationships using the centralized service
         if (ticketUpdateDto.getCoordinatesId() != null) {
-            Coordinates coordinates = coordinatesRepository
-                    .findById(ticketUpdateDto.getCoordinatesId())
-                    .orElseThrow(() -> new NotFoundException(
-                            "Coordinates not found with ID: " + ticketUpdateDto.getCoordinatesId()));
-            existingTicket.setCoordinates(coordinates);
+            existingTicket
+                    .setCoordinates(entityResolutionService.resolveCoordinates(ticketUpdateDto.getCoordinatesId()));
         }
-
-        // Update person by ID
         if (ticketUpdateDto.getPersonId() != null) {
-            Person person = personRepository
-                    .findById(ticketUpdateDto.getPersonId())
-                    .orElseThrow(() -> new NotFoundException(
-                            "Person not found with ID: " + ticketUpdateDto.getPersonId()));
-            existingTicket.setPerson(person);
+            existingTicket.setPerson(entityResolutionService.resolvePerson(ticketUpdateDto.getPersonId()));
         }
-
-        // Update event by ID
         if (ticketUpdateDto.getEventId() != null) {
-            Event event = eventRepository
-                    .findById(ticketUpdateDto.getEventId())
-                    .orElseThrow(() -> new NotFoundException(
-                            "Event not found with ID: " + ticketUpdateDto.getEventId()));
-            existingTicket.setEvent(event);
+            existingTicket.setEvent(entityResolutionService.resolveEventOptional(ticketUpdateDto.getEventId()));
         }
-
-        // Update venue by ID
         if (ticketUpdateDto.getVenueId() != null) {
-            Venue venue = venueRepository
-                    .findById(ticketUpdateDto.getVenueId())
-                    .orElseThrow(() -> new NotFoundException(
-                            "Venue not found with ID: " + ticketUpdateDto.getVenueId()));
-            existingTicket.setVenue(venue);
+            existingTicket.setVenue(entityResolutionService.resolveVenueOptional(ticketUpdateDto.getVenueId()));
         }
 
         existingTicket.setUpdatedBy(currentUser);
 
         Ticket savedTicket = ticketRepository.save(existingTicket);
         TicketDto dto = ticketMapper.toDto(savedTicket);
-        changeEventPublisher.publish("tickets", ChangeEvent.Operation.UPDATE,
-                dto.getId());
+        changeEventPublisher.publish("tickets", ChangeEvent.Operation.UPDATE, dto.getId());
         return dto;
     }
 
     @Transactional
     public DeleteResponse deleteTicket(Long id, User currentUser) {
-        if (currentUser == null) {
-            throw new UnauthorizedException("User not authenticated");
-        }
-
         Ticket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Ticket not found with ID: " + id));
 
-        // Check permissions
-        if (!UserRole.ADMIN.equals(currentUser.getRole()) &&
-                !ticket.getCreatedBy().getId().equals(currentUser.getId())) {
-            throw new ForbiddenException("You don't have permission to delete this ticket");
-        }
+        // Check permissions using centralized authorization service
+        authorizationService.requireCanModify(currentUser, ticket.getCreatedBy().getId());
 
         ticketRepository.deleteById(id);
         changeEventPublisher.publish("tickets", ChangeEvent.Operation.DELETE, id);

@@ -4,12 +4,11 @@ import com.itmo.ticketsystem.adminrolerequest.dto.AdminRoleRequestDto;
 import com.itmo.ticketsystem.adminrolerequest.dto.AdminRoleRequestProcessDto;
 import com.itmo.ticketsystem.common.UserRole;
 import com.itmo.ticketsystem.common.dto.DeleteResponse;
-import com.itmo.ticketsystem.common.exceptions.ForbiddenException;
 import com.itmo.ticketsystem.common.exceptions.NotFoundException;
-import com.itmo.ticketsystem.common.exceptions.UnauthorizedException;
+import com.itmo.ticketsystem.common.security.AuthorizationService;
 import com.itmo.ticketsystem.user.User;
 import com.itmo.ticketsystem.user.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -18,25 +17,20 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class AdminRoleRequestService {
 
-    @Autowired
-    private AdminRoleRequestRepository requestRepository;
-
-    @Autowired
-    private AdminRoleRequestMapper requestMapper;
-
-    @Autowired
-    private UserService userService;
+    private final AdminRoleRequestRepository requestRepository;
+    private final AdminRoleRequestMapper requestMapper;
+    private final UserService userService;
+    private final AuthorizationService authorizationService;
 
     @Transactional
     public AdminRoleRequestDto createRequest(User currentUser) {
-        if (currentUser == null) {
-            throw new UnauthorizedException("User not authenticated");
-        }
+        authorizationService.requireAuthenticated(currentUser);
 
         // Check if user is already an admin
-        if (UserRole.ADMIN.equals(currentUser.getRole())) {
+        if (authorizationService.isAdmin(currentUser)) {
             throw new IllegalArgumentException("You are already an admin");
         }
 
@@ -55,13 +49,7 @@ public class AdminRoleRequestService {
     }
 
     public Page<AdminRoleRequestDto> getAllRequests(Pageable pageable, User currentUser) {
-        if (currentUser == null) {
-            throw new UnauthorizedException("User not authenticated");
-        }
-
-        if (!UserRole.ADMIN.equals(currentUser.getRole())) {
-            throw new ForbiddenException("Only admins can view admin role requests");
-        }
+        authorizationService.requireAdmin(currentUser);
 
         return requestRepository.findAllByOrderByCreatedAtDesc(pageable)
                 .map(requestMapper::toDto);
@@ -69,26 +57,14 @@ public class AdminRoleRequestService {
 
     public Page<AdminRoleRequestDto> getRequestsByStatus(AdminRoleRequestStatus status, Pageable pageable,
             User currentUser) {
-        if (currentUser == null) {
-            throw new UnauthorizedException("User not authenticated");
-        }
-
-        if (!UserRole.ADMIN.equals(currentUser.getRole())) {
-            throw new ForbiddenException("Only admins can view admin role requests");
-        }
+        authorizationService.requireAdmin(currentUser);
 
         return requestRepository.findByStatus(status, pageable)
                 .map(requestMapper::toDto);
     }
 
     public AdminRoleRequestDto getRequestById(Long id, User currentUser) {
-        if (currentUser == null) {
-            throw new UnauthorizedException("User not authenticated");
-        }
-
-        if (!UserRole.ADMIN.equals(currentUser.getRole())) {
-            throw new ForbiddenException("Only admins can view admin role requests");
-        }
+        authorizationService.requireAdmin(currentUser);
 
         return requestRepository.findById(id)
                 .map(requestMapper::toDto)
@@ -97,13 +73,7 @@ public class AdminRoleRequestService {
 
     @Transactional
     public AdminRoleRequestDto processRequest(Long requestId, AdminRoleRequestProcessDto processDto, User currentUser) {
-        if (currentUser == null) {
-            throw new UnauthorizedException("User not authenticated");
-        }
-
-        if (!UserRole.ADMIN.equals(currentUser.getRole())) {
-            throw new ForbiddenException("Only admins can process admin role requests");
-        }
+        authorizationService.requireAdmin(currentUser);
 
         AdminRoleRequest request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new NotFoundException("Admin role request not found with ID: " + requestId));
@@ -141,13 +111,7 @@ public class AdminRoleRequestService {
 
     @Transactional
     public DeleteResponse deleteRequest(Long requestId, User currentUser) {
-        if (currentUser == null) {
-            throw new UnauthorizedException("User not authenticated");
-        }
-
-        if (!UserRole.ADMIN.equals(currentUser.getRole())) {
-            throw new ForbiddenException("Only admins can delete admin role requests");
-        }
+        authorizationService.requireAdmin(currentUser);
 
         if (!requestRepository.existsById(requestId)) {
             throw new NotFoundException("Admin role request not found with ID: " + requestId);

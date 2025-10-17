@@ -1,12 +1,11 @@
 package com.itmo.ticketsystem.auth;
 
 import com.itmo.ticketsystem.auth.dto.*;
+import com.itmo.ticketsystem.common.controller.BaseController;
 import com.itmo.ticketsystem.user.dto.UserDto;
 import com.itmo.ticketsystem.common.exceptions.UnauthorizedException;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -14,10 +13,10 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "*")
-public class AuthController {
+@RequiredArgsConstructor
+public class AuthController extends BaseController {
 
-    @Autowired
-    private AuthService authService;
+    private final AuthService authService;
 
     @PostMapping("/register")
     public ResponseEntity<AuthenticationDto> register(@Valid @RequestBody RegisterDto request) {
@@ -28,14 +27,13 @@ public class AuthController {
     }
 
     @GetMapping("/current")
-    public ResponseEntity<UserDto> getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated()) {
-            String username = authentication.getName();
-            UserDto userDto = authService.getCurrentUserInfo(username);
-            return ResponseEntity.ok(userDto);
+    public ResponseEntity<UserDto> getCurrentUserInfo() {
+        String username = getCurrentUsername();
+        if (username == null) {
+            throw new UnauthorizedException("User not authenticated");
         }
-        throw new UnauthorizedException("User not authenticated");
+        UserDto userDto = authService.getCurrentUserInfo(username);
+        return ResponseEntity.ok(userDto);
     }
 
     @PostMapping("/login")

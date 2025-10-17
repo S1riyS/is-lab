@@ -3,28 +3,24 @@ package com.itmo.ticketsystem.event;
 import com.itmo.ticketsystem.event.dto.EventCreateDto;
 import com.itmo.ticketsystem.event.dto.EventDto;
 import com.itmo.ticketsystem.event.dto.EventUpdateDto;
+import com.itmo.ticketsystem.common.controller.BaseController;
 import com.itmo.ticketsystem.common.dto.DeleteResponse;
-import com.itmo.ticketsystem.common.util.PaginationUtil;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import com.itmo.ticketsystem.user.User;
 import jakarta.validation.Valid;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/events")
 @CrossOrigin(origins = "*")
-public class EventController {
+@RequiredArgsConstructor
+public class EventController extends BaseController {
 
-    @Autowired
-    private EventService eventService;
+    private final EventService eventService;
 
     @GetMapping
     public ResponseEntity<Page<EventDto>> getAllEvents(
@@ -32,8 +28,7 @@ public class EventController {
             @RequestParam(required = false) String search) {
         Page<EventDto> events;
         if (search != null && !search.trim().isEmpty()) {
-            List<EventDto> eventList = eventService.searchEventsByName(search);
-            events = PaginationUtil.createPageFromList(eventList, pageable);
+            events = eventService.searchEventsByName(search, pageable);
         } else {
             events = eventService.getAllEvents(pageable);
         }
@@ -63,14 +58,5 @@ public class EventController {
     public ResponseEntity<DeleteResponse> deleteEvent(@PathVariable Long id) {
         DeleteResponse response = eventService.deleteEvent(id, getCurrentUser());
         return ResponseEntity.ok(response);
-    }
-
-    private User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated()
-                && authentication.getPrincipal() instanceof User) {
-            return (User) authentication.getPrincipal();
-        }
-        return null;
     }
 }

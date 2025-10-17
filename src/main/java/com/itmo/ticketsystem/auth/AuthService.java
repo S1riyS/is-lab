@@ -9,24 +9,18 @@ import com.itmo.ticketsystem.user.dto.UserDto;
 import com.itmo.ticketsystem.common.exceptions.BadRequestException;
 import com.itmo.ticketsystem.common.exceptions.NotFoundException;
 import com.itmo.ticketsystem.common.exceptions.UnauthorizedException;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class AuthService {
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private UserMapper userMapper;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private JwtService jwtService;
+    private final UserService userService;
+    private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     public AuthenticationDto authenticateUser(String username, String password) {
         User user = userService

@@ -3,15 +3,14 @@ package com.itmo.ticketsystem.user;
 import com.itmo.ticketsystem.user.dto.UserCreateDto;
 import com.itmo.ticketsystem.user.dto.UserDto;
 import com.itmo.ticketsystem.user.dto.UserUpdateDto;
+import com.itmo.ticketsystem.common.controller.BaseController;
 import com.itmo.ticketsystem.common.dto.DeleteResponse;
 import com.itmo.ticketsystem.common.util.PaginationUtil;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -20,16 +19,15 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/users")
 @CrossOrigin(origins = "*")
-public class UserController {
+@RequiredArgsConstructor
+public class UserController extends BaseController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
     @GetMapping
     public ResponseEntity<Page<UserDto>> getAllUsers(
             @PageableDefault(size = 10, sort = "id") Pageable pageable) {
-        User currentUser = getCurrentUser();
-        userService.checkAdminAccess(currentUser);
+        userService.checkAdminAccess(getCurrentUser());
 
         List<UserDto> users = userService.getAllUsers();
         Page<UserDto> userPage = PaginationUtil.createPageFromList(users, pageable);
@@ -38,8 +36,7 @@ public class UserController {
 
     @GetMapping("/{id}")
     public ResponseEntity<UserDto> getUserById(@PathVariable Long id) {
-        User currentUser = getCurrentUser();
-        userService.checkUserAccess(currentUser, id);
+        userService.checkUserAccess(getCurrentUser(), id);
 
         UserDto user = userService.getUserById(id);
         return ResponseEntity.ok(user);
@@ -47,8 +44,7 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<UserDto> createUser(@Valid @RequestBody UserCreateDto userCreateDto) {
-        User currentUser = getCurrentUser();
-        userService.checkAdminAccess(currentUser);
+        userService.checkAdminAccess(getCurrentUser());
 
         UserDto createdUser = userService.createUser(userCreateDto);
         return ResponseEntity.ok(createdUser);
@@ -56,8 +52,7 @@ public class UserController {
 
     @PutMapping("/{id}")
     public ResponseEntity<UserDto> updateUser(@PathVariable Long id, @Valid @RequestBody UserUpdateDto userUpdateDto) {
-        User currentUser = getCurrentUser();
-        userService.checkUserAccess(currentUser, id);
+        userService.checkUserAccess(getCurrentUser(), id);
 
         UserDto updatedUser = userService.updateUser(id, userUpdateDto);
         return ResponseEntity.ok(updatedUser);
@@ -65,19 +60,9 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<DeleteResponse> deleteUser(@PathVariable Long id) {
-        User currentUser = getCurrentUser();
-        userService.checkAdminAccess(currentUser);
+        userService.checkAdminAccess(getCurrentUser());
 
         DeleteResponse response = userService.deleteUser(id);
         return ResponseEntity.ok(response);
-    }
-
-    private User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated()) {
-            String username = authentication.getName();
-            return userService.findByUsername(username).orElse(null);
-        }
-        return null;
     }
 }

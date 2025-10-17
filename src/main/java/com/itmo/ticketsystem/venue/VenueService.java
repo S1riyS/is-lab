@@ -5,31 +5,24 @@ import com.itmo.ticketsystem.venue.dto.VenueDto;
 import com.itmo.ticketsystem.venue.dto.VenueUpdateDto;
 import com.itmo.ticketsystem.common.dto.DeleteResponse;
 import com.itmo.ticketsystem.common.exceptions.NotFoundException;
+import com.itmo.ticketsystem.common.security.AuthorizationService;
 import com.itmo.ticketsystem.common.ws.ChangeEventPublisher;
 import com.itmo.ticketsystem.common.ws.ChangeEvent;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.itmo.ticketsystem.user.User;
-import com.itmo.ticketsystem.common.UserRole;
-import com.itmo.ticketsystem.common.exceptions.UnauthorizedException;
-import com.itmo.ticketsystem.common.exceptions.ForbiddenException;
-
-import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class VenueService {
 
-    @Autowired
-    private VenueRepository venueRepository;
-
-    @Autowired
-    private VenueMapper venueMapper;
-
-    @Autowired
-    private ChangeEventPublisher changeEventPublisher;
+    private final VenueRepository venueRepository;
+    private final VenueMapper venueMapper;
+    private final ChangeEventPublisher changeEventPublisher;
+    private final AuthorizationService authorizationService;
 
     public Page<VenueDto> getAllVenues(Pageable pageable) {
         return venueRepository.findAll(pageable).map(venueMapper::toDto);
@@ -43,6 +36,8 @@ public class VenueService {
 
     @Transactional
     public VenueDto createVenue(VenueCreateDto venueCreateDto, User currentUser) {
+        authorizationService.requireAuthenticated(currentUser);
+
         Venue venue = venueMapper.toEntity(venueCreateDto);
         venue.setCreatedBy(currentUser);
         Venue savedVenue = venueRepository.save(venue);
@@ -53,17 +48,11 @@ public class VenueService {
 
     @Transactional
     public VenueDto updateVenue(Long id, VenueUpdateDto venueUpdateDto, User currentUser) {
-        if (currentUser == null) {
-            throw new UnauthorizedException("User not authenticated");
-        }
         Venue existingVenue = venueRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Venue not found with ID: " + id));
 
-        if (!UserRole.ADMIN.equals(currentUser.getRole()) &&
-                (existingVenue.getCreatedBy() == null
-                        || !existingVenue.getCreatedBy().getId().equals(currentUser.getId()))) {
-            throw new ForbiddenException("Access denied");
-        }
+        Long creatorId = existingVenue.getCreatedBy() != null ? existingVenue.getCreatedBy().getId() : null;
+        authorizationService.requireCanModifyOrAdmin(currentUser, creatorId);
 
         venueMapper.updateEntity(existingVenue, venueUpdateDto);
         Venue savedVenue = venueRepository.save(existingVenue);
@@ -74,16 +63,12 @@ public class VenueService {
 
     @Transactional
     public DeleteResponse deleteVenue(Long id, User currentUser) {
-        if (currentUser == null) {
-            throw new UnauthorizedException("User not authenticated");
-        }
         Venue venue = venueRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Venue not found with ID: " + id));
 
-        if (!UserRole.ADMIN.equals(currentUser.getRole()) &&
-                (venue.getCreatedBy() == null || !venue.getCreatedBy().getId().equals(currentUser.getId()))) {
-            throw new ForbiddenException("Access denied");
-        }
+        Long creatorId = venue.getCreatedBy() != null ? venue.getCreatedBy().getId() : null;
+        authorizationService.requireCanModifyOrAdmin(currentUser, creatorId);
+
         venueRepository.deleteById(id);
         changeEventPublisher.publish("venues", ChangeEvent.Operation.DELETE, id);
         return DeleteResponse.builder()
@@ -91,9 +76,8 @@ public class VenueService {
                 .build();
     }
 
-    public List<VenueDto> searchVenuesByName(String name) {
-        return venueRepository.findByNameContainingIgnoreCase(name).stream()
-                .map(venueMapper::toDto)
-                .toList();
+    public Page<VenueDto> searchVenuesByName(String name, Pageable pageable) {
+        return venueRepository.findByNameContainingIgnoreCase(name, pageable)
+                .map(venueMapper::toDto);
     }
 }

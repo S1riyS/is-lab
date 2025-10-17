@@ -6,9 +6,8 @@ import com.itmo.ticketsystem.user.dto.UserUpdateDto;
 import com.itmo.ticketsystem.common.UserRole;
 import com.itmo.ticketsystem.common.dto.DeleteResponse;
 import com.itmo.ticketsystem.common.exceptions.NotFoundException;
-import com.itmo.ticketsystem.common.exceptions.ForbiddenException;
-import com.itmo.ticketsystem.common.exceptions.UnauthorizedException;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.itmo.ticketsystem.common.security.AuthorizationService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,16 +16,13 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private UserMapper userMapper;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
+    private final AuthorizationService authorizationService;
 
     public UserDto createUser(String username, String password, UserRole role) {
         if (userRepository.existsByUsername(username)) {
@@ -132,20 +128,10 @@ public class UserService {
     }
 
     public void checkAdminAccess(User currentUser) {
-        if (currentUser == null) {
-            throw new UnauthorizedException("User not authenticated");
-        }
-        if (!UserRole.ADMIN.equals(currentUser.getRole())) {
-            throw new ForbiddenException("Access denied");
-        }
+        authorizationService.requireAdmin(currentUser);
     }
 
     public void checkUserAccess(User currentUser, Long targetUserId) {
-        if (currentUser == null) {
-            throw new UnauthorizedException("User not authenticated");
-        }
-        if (!UserRole.ADMIN.equals(currentUser.getRole()) && !currentUser.getId().equals(targetUserId)) {
-            throw new ForbiddenException("Access denied");
-        }
+        authorizationService.requireSelfOrAdmin(currentUser, targetUserId);
     }
 }

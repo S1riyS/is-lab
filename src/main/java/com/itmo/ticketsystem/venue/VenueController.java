@@ -3,28 +3,24 @@ package com.itmo.ticketsystem.venue;
 import com.itmo.ticketsystem.venue.dto.VenueCreateDto;
 import com.itmo.ticketsystem.venue.dto.VenueDto;
 import com.itmo.ticketsystem.venue.dto.VenueUpdateDto;
+import com.itmo.ticketsystem.common.controller.BaseController;
 import com.itmo.ticketsystem.common.dto.DeleteResponse;
-import com.itmo.ticketsystem.common.util.PaginationUtil;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import com.itmo.ticketsystem.user.User;
 import jakarta.validation.Valid;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/venues")
 @CrossOrigin(origins = "*")
-public class VenueController {
+@RequiredArgsConstructor
+public class VenueController extends BaseController {
 
-    @Autowired
-    private VenueService venueService;
+    private final VenueService venueService;
 
     @GetMapping
     public ResponseEntity<Page<VenueDto>> getAllVenues(
@@ -32,8 +28,7 @@ public class VenueController {
             @RequestParam(required = false) String search) {
         Page<VenueDto> venues;
         if (search != null && !search.trim().isEmpty()) {
-            List<VenueDto> venueList = venueService.searchVenuesByName(search);
-            venues = PaginationUtil.createPageFromList(venueList, pageable);
+            venues = venueService.searchVenuesByName(search, pageable);
         } else {
             venues = venueService.getAllVenues(pageable);
         }
@@ -63,14 +58,5 @@ public class VenueController {
     public ResponseEntity<DeleteResponse> deleteVenue(@PathVariable Long id) {
         DeleteResponse response = venueService.deleteVenue(id, getCurrentUser());
         return ResponseEntity.ok(response);
-    }
-
-    private User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated()
-                && authentication.getPrincipal() instanceof User) {
-            return (User) authentication.getPrincipal();
-        }
-        return null;
     }
 }
