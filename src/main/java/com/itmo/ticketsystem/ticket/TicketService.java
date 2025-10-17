@@ -60,7 +60,6 @@ public class TicketService {
         ticket.setCreatedBy(currentUser);
         ticket.setUpdatedBy(currentUser);
 
-        // Resolve entity relationships using the centralized service
         ticket.setCoordinates(entityResolutionService.resolveCoordinates(ticketCreateDto.getCoordinatesId()));
         ticket.setPerson(entityResolutionService.resolvePerson(ticketCreateDto.getPersonId()));
         ticket.setEvent(entityResolutionService.resolveEventOptional(ticketCreateDto.getEventId()));
@@ -82,7 +81,6 @@ public class TicketService {
 
         ticketMapper.updateEntity(existingTicket, ticketUpdateDto);
 
-        // Update entity relationships using the centralized service
         if (ticketUpdateDto.getCoordinatesId() != null) {
             existingTicket
                     .setCoordinates(entityResolutionService.resolveCoordinates(ticketUpdateDto.getCoordinatesId()));
@@ -110,7 +108,6 @@ public class TicketService {
         Ticket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Ticket not found with ID: " + id));
 
-        // Check permissions using centralized authorization service
         authorizationService.requireCanModify(currentUser, ticket.getCreatedBy().getId());
 
         ticketRepository.deleteById(id);
@@ -178,7 +175,6 @@ public class TicketService {
         List<Ticket> tickets = ticketRepository.findByVenueId(venueId);
         int count = tickets.size();
 
-        // Delete all tickets
         ticketRepository.deleteAll(tickets);
 
         // Publish change events for each deleted ticket
