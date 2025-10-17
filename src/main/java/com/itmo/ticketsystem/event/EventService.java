@@ -51,7 +51,6 @@ public class EventService {
         Event existingEvent = eventRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Event not found with ID: " + id));
 
-        // Check permissions using centralized authorization service
         Long creatorId = existingEvent.getCreatedBy() != null ? existingEvent.getCreatedBy().getId() : null;
         authorizationService.requireCanModifyOrAdmin(currentUser, creatorId);
 
@@ -67,7 +66,6 @@ public class EventService {
         Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Event not found with ID: " + id));
 
-        // Check permissions using centralized authorization service
         Long creatorId = event.getCreatedBy() != null ? event.getCreatedBy().getId() : null;
         authorizationService.requireCanModifyOrAdmin(currentUser, creatorId);
 

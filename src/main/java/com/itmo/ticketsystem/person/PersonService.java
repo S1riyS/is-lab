@@ -3,37 +3,28 @@ package com.itmo.ticketsystem.person;
 import com.itmo.ticketsystem.person.dto.PersonCreateDto;
 import com.itmo.ticketsystem.person.dto.PersonDto;
 import com.itmo.ticketsystem.person.dto.PersonUpdateDto;
-import com.itmo.ticketsystem.location.LocationRepository;
 import com.itmo.ticketsystem.common.dto.DeleteResponse;
 import com.itmo.ticketsystem.common.exceptions.NotFoundException;
+import com.itmo.ticketsystem.common.security.AuthorizationService;
+import com.itmo.ticketsystem.common.service.EntityResolutionService;
 import com.itmo.ticketsystem.common.ws.ChangeEventPublisher;
 import com.itmo.ticketsystem.common.ws.ChangeEvent;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.itmo.ticketsystem.user.User;
-import com.itmo.ticketsystem.common.UserRole;
-import com.itmo.ticketsystem.common.exceptions.UnauthorizedException;
-import com.itmo.ticketsystem.common.exceptions.ForbiddenException;
-
-import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class PersonService {
 
-    @Autowired
-    private PersonRepository personRepository;
-
-    @Autowired
-    private LocationRepository locationRepository;
-
-    @Autowired
-    private PersonMapper personMapper;
-
-    @Autowired
-    private ChangeEventPublisher changeEventPublisher;
+    private final PersonRepository personRepository;
+    private final PersonMapper personMapper;
+    private final ChangeEventPublisher changeEventPublisher;
+    private final AuthorizationService authorizationService;
+    private final EntityResolutionService entityResolutionService;
 
     public Page<PersonDto> getAllPersons(Pageable pageable) {
         return personRepository.findAll(pageable).map(personMapper::toDto);
@@ -47,8 +38,10 @@ public class PersonService {
 
     @Transactional
     public PersonDto createPerson(PersonCreateDto personCreateDto, User currentUser) {
+        authorizationService.requireAuthenticated(currentUser);
+
         Person person = personMapper.toEntity(personCreateDto);
-        person.setLocation(locationRepository.getReferenceById(personCreateDto.getLocationId()));
+        person.setLocation(entityResolutionService.resolveLocation(personCreateDto.getLocationId()));
         person.setCreatedBy(currentUser);
         Person savedPerson = personRepository.save(person);
         PersonDto dto = personMapper.toDto(savedPerson);
@@ -58,22 +51,16 @@ public class PersonService {
 
     @Transactional
     public PersonDto updatePerson(Long id, PersonUpdateDto personUpdateDto, User currentUser) {
-        if (currentUser == null) {
-            throw new UnauthorizedException("User not authenticated");
-        }
         Person existingPerson = personRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Person not found with ID: " + id));
 
-        if (!UserRole.ADMIN.equals(currentUser.getRole()) &&
-                (existingPerson.getCreatedBy() == null
-                        || !existingPerson.getCreatedBy().getId().equals(currentUser.getId()))) {
-            throw new ForbiddenException("Access denied");
-        }
+        Long creatorId = existingPerson.getCreatedBy() != null ? existingPerson.getCreatedBy().getId() : null;
+        authorizationService.requireCanModifyOrAdmin(currentUser, creatorId);
 
         personMapper.updateEntity(existingPerson, personUpdateDto);
 
         if (personUpdateDto.getLocationId() != null) {
-            existingPerson.setLocation(locationRepository.getReferenceById(personUpdateDto.getLocationId()));
+            existingPerson.setLocation(entityResolutionService.resolveLocation(personUpdateDto.getLocationId()));
         }
 
         Person savedPerson = personRepository.save(existingPerson);
@@ -84,16 +71,12 @@ public class PersonService {
 
     @Transactional
     public DeleteResponse deletePerson(Long id, User currentUser) {
-        if (currentUser == null) {
-            throw new UnauthorizedException("User not authenticated");
-        }
         Person person = personRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Person not found with ID: " + id));
 
-        if (!UserRole.ADMIN.equals(currentUser.getRole()) &&
-                (person.getCreatedBy() == null || !person.getCreatedBy().getId().equals(currentUser.getId()))) {
-            throw new ForbiddenException("Access denied");
-        }
+        Long creatorId = person.getCreatedBy() != null ? person.getCreatedBy().getId() : null;
+        authorizationService.requireCanModifyOrAdmin(currentUser, creatorId);
+
         personRepository.deleteById(id);
         changeEventPublisher.publish("persons", ChangeEvent.Operation.DELETE, id);
         return DeleteResponse.builder()
@@ -101,9 +84,8 @@ public class PersonService {
                 .build();
     }
 
-    public List<PersonDto> searchPersonsByPassportID(String passportID) {
-        return personRepository.findByPassportIDContainingIgnoreCase(passportID).stream()
-                .map(personMapper::toDto)
-                .toList();
+    public Page<PersonDto> searchPersonsByPassportID(String passportID, Pageable pageable) {
+        return personRepository.findByPassportIDContainingIgnoreCase(passportID, pageable)
+                .map(personMapper::toDto);
     }
 }

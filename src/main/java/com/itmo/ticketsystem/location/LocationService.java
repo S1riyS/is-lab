@@ -5,31 +5,24 @@ import com.itmo.ticketsystem.location.dto.LocationDto;
 import com.itmo.ticketsystem.location.dto.LocationUpdateDto;
 import com.itmo.ticketsystem.common.dto.DeleteResponse;
 import com.itmo.ticketsystem.common.exceptions.NotFoundException;
+import com.itmo.ticketsystem.common.security.AuthorizationService;
 import com.itmo.ticketsystem.common.ws.ChangeEventPublisher;
 import com.itmo.ticketsystem.common.ws.ChangeEvent;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.itmo.ticketsystem.user.User;
-import com.itmo.ticketsystem.common.UserRole;
-import com.itmo.ticketsystem.common.exceptions.UnauthorizedException;
-import com.itmo.ticketsystem.common.exceptions.ForbiddenException;
-
-import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class LocationService {
 
-    @Autowired
-    private LocationRepository locationRepository;
-
-    @Autowired
-    private LocationMapper locationMapper;
-
-    @Autowired
-    private ChangeEventPublisher changeEventPublisher;
+    private final LocationRepository locationRepository;
+    private final LocationMapper locationMapper;
+    private final ChangeEventPublisher changeEventPublisher;
+    private final AuthorizationService authorizationService;
 
     public Page<LocationDto> getAllLocations(Pageable pageable) {
         return locationRepository.findAll(pageable).map(locationMapper::toDto);
@@ -43,6 +36,8 @@ public class LocationService {
 
     @Transactional
     public LocationDto createLocation(LocationCreateDto locationCreateDto, User currentUser) {
+        authorizationService.requireAuthenticated(currentUser);
+
         Location location = locationMapper.toEntity(locationCreateDto);
         location.setCreatedBy(currentUser);
         Location savedLocation = locationRepository.save(location);
@@ -53,17 +48,11 @@ public class LocationService {
 
     @Transactional
     public LocationDto updateLocation(Long id, LocationUpdateDto locationUpdateDto, User currentUser) {
-        if (currentUser == null) {
-            throw new UnauthorizedException("User not authenticated");
-        }
         Location existingLocation = locationRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Location not found with ID: " + id));
 
-        if (!UserRole.ADMIN.equals(currentUser.getRole()) &&
-                (existingLocation.getCreatedBy() == null
-                        || !existingLocation.getCreatedBy().getId().equals(currentUser.getId()))) {
-            throw new ForbiddenException("Access denied");
-        }
+        Long creatorId = existingLocation.getCreatedBy() != null ? existingLocation.getCreatedBy().getId() : null;
+        authorizationService.requireCanModifyOrAdmin(currentUser, creatorId);
 
         locationMapper.updateEntity(existingLocation, locationUpdateDto);
         Location savedLocation = locationRepository.save(existingLocation);
@@ -74,16 +63,12 @@ public class LocationService {
 
     @Transactional
     public DeleteResponse deleteLocation(Long id, User currentUser) {
-        if (currentUser == null) {
-            throw new UnauthorizedException("User not authenticated");
-        }
         Location location = locationRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Location not found with ID: " + id));
 
-        if (!UserRole.ADMIN.equals(currentUser.getRole()) &&
-                (location.getCreatedBy() == null || !location.getCreatedBy().getId().equals(currentUser.getId()))) {
-            throw new ForbiddenException("Access denied");
-        }
+        Long creatorId = location.getCreatedBy() != null ? location.getCreatedBy().getId() : null;
+        authorizationService.requireCanModifyOrAdmin(currentUser, creatorId);
+
         locationRepository.deleteById(id);
         changeEventPublisher.publish("locations", ChangeEvent.Operation.DELETE, id);
         return DeleteResponse.builder()
@@ -91,9 +76,8 @@ public class LocationService {
                 .build();
     }
 
-    public List<LocationDto> searchLocationsByName(String name) {
-        return locationRepository.findByNameContainingIgnoreCase(name).stream()
-                .map(locationMapper::toDto)
-                .toList();
+    public Page<LocationDto> searchLocationsByName(String name, Pageable pageable) {
+        return locationRepository.findByNameContainingIgnoreCase(name, pageable)
+                .map(locationMapper::toDto);
     }
 }

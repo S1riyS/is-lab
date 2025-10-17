@@ -3,7 +3,6 @@ package com.itmo.ticketsystem.ticket;
 import com.itmo.ticketsystem.ticket.dto.TicketCreateDto;
 import com.itmo.ticketsystem.ticket.dto.TicketDto;
 import com.itmo.ticketsystem.ticket.dto.TicketUpdateDto;
-import com.itmo.ticketsystem.event.Event;
 import com.itmo.ticketsystem.user.User;
 import com.itmo.ticketsystem.venue.Venue;
 import com.itmo.ticketsystem.venue.VenueRepository;
@@ -79,10 +78,8 @@ public class TicketService {
                 .findById(id)
                 .orElseThrow(() -> new NotFoundException("Ticket not found with ID: " + id));
 
-        // Check permissions using centralized authorization service
         authorizationService.requireCanModify(currentUser, existingTicket.getCreatedBy().getId());
 
-        // Update fields using mapper
         ticketMapper.updateEntity(existingTicket, ticketUpdateDto);
 
         // Update entity relationships using the centralized service

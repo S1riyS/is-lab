@@ -3,26 +3,24 @@ package com.itmo.ticketsystem.coordinates;
 import com.itmo.ticketsystem.coordinates.dto.CoordinatesCreateDto;
 import com.itmo.ticketsystem.coordinates.dto.CoordinatesDto;
 import com.itmo.ticketsystem.coordinates.dto.CoordinatesUpdateDto;
+import com.itmo.ticketsystem.common.controller.BaseController;
 import com.itmo.ticketsystem.common.dto.DeleteResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import com.itmo.ticketsystem.user.User;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/coordinates")
 @CrossOrigin(origins = "*")
-public class CoordinatesController {
+@RequiredArgsConstructor
+public class CoordinatesController extends BaseController {
 
-    @Autowired
-    private CoordinatesService coordinatesService;
+    private final CoordinatesService coordinatesService;
 
     @GetMapping
     public ResponseEntity<Page<CoordinatesDto>> getAllCoordinates(
@@ -57,14 +55,5 @@ public class CoordinatesController {
     public ResponseEntity<DeleteResponse> deleteCoordinates(@PathVariable Long id) {
         DeleteResponse response = coordinatesService.deleteCoordinates(id, getCurrentUser());
         return ResponseEntity.ok(response);
-    }
-
-    private User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated()
-                && authentication.getPrincipal() instanceof User) {
-            return (User) authentication.getPrincipal();
-        }
-        return null;
     }
 }

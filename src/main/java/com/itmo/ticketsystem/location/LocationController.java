@@ -3,28 +3,24 @@ package com.itmo.ticketsystem.location;
 import com.itmo.ticketsystem.location.dto.LocationCreateDto;
 import com.itmo.ticketsystem.location.dto.LocationDto;
 import com.itmo.ticketsystem.location.dto.LocationUpdateDto;
+import com.itmo.ticketsystem.common.controller.BaseController;
 import com.itmo.ticketsystem.common.dto.DeleteResponse;
-import com.itmo.ticketsystem.common.util.PaginationUtil;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import com.itmo.ticketsystem.user.User;
 import jakarta.validation.Valid;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/locations")
 @CrossOrigin(origins = "*")
-public class LocationController {
+@RequiredArgsConstructor
+public class LocationController extends BaseController {
 
-    @Autowired
-    private LocationService locationService;
+    private final LocationService locationService;
 
     @GetMapping
     public ResponseEntity<Page<LocationDto>> getAllLocations(
@@ -32,8 +28,7 @@ public class LocationController {
             @RequestParam(required = false) String search) {
         Page<LocationDto> locations;
         if (search != null && !search.trim().isEmpty()) {
-            List<LocationDto> locationList = locationService.searchLocationsByName(search);
-            locations = PaginationUtil.createPageFromList(locationList, pageable);
+            locations = locationService.searchLocationsByName(search, pageable);
         } else {
             locations = locationService.getAllLocations(pageable);
         }
@@ -63,14 +58,5 @@ public class LocationController {
     public ResponseEntity<DeleteResponse> deleteLocation(@PathVariable Long id) {
         DeleteResponse response = locationService.deleteLocation(id, getCurrentUser());
         return ResponseEntity.ok(response);
-    }
-
-    private User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated()
-                && authentication.getPrincipal() instanceof User) {
-            return (User) authentication.getPrincipal();
-        }
-        return null;
     }
 }

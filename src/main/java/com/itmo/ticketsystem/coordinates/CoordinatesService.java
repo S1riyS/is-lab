@@ -5,29 +5,24 @@ import com.itmo.ticketsystem.coordinates.dto.CoordinatesDto;
 import com.itmo.ticketsystem.coordinates.dto.CoordinatesUpdateDto;
 import com.itmo.ticketsystem.common.dto.DeleteResponse;
 import com.itmo.ticketsystem.common.exceptions.NotFoundException;
+import com.itmo.ticketsystem.common.security.AuthorizationService;
 import com.itmo.ticketsystem.common.ws.ChangeEventPublisher;
 import com.itmo.ticketsystem.common.ws.ChangeEvent;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.itmo.ticketsystem.user.User;
-import com.itmo.ticketsystem.common.UserRole;
-import com.itmo.ticketsystem.common.exceptions.UnauthorizedException;
-import com.itmo.ticketsystem.common.exceptions.ForbiddenException;
 
 @Service
+@RequiredArgsConstructor
 public class CoordinatesService {
 
-    @Autowired
-    private CoordinatesRepository coordinatesRepository;
-
-    @Autowired
-    private CoordinatesMapper coordinatesMapper;
-
-    @Autowired
-    private ChangeEventPublisher changeEventPublisher;
+    private final CoordinatesRepository coordinatesRepository;
+    private final CoordinatesMapper coordinatesMapper;
+    private final ChangeEventPublisher changeEventPublisher;
+    private final AuthorizationService authorizationService;
 
     public Page<CoordinatesDto> getAllCoordinates(Pageable pageable) {
         return coordinatesRepository.findAll(pageable).map(coordinatesMapper::toDto);
@@ -41,6 +36,8 @@ public class CoordinatesService {
 
     @Transactional
     public CoordinatesDto createCoordinates(CoordinatesCreateDto coordinatesCreateDto, User currentUser) {
+        authorizationService.requireAuthenticated(currentUser);
+
         Coordinates coordinates = coordinatesMapper.toEntity(coordinatesCreateDto);
         coordinates.setCreatedBy(currentUser);
         Coordinates savedCoordinates = coordinatesRepository.save(coordinates);
@@ -51,17 +48,11 @@ public class CoordinatesService {
 
     @Transactional
     public CoordinatesDto updateCoordinates(Long id, CoordinatesUpdateDto coordinatesUpdateDto, User currentUser) {
-        if (currentUser == null) {
-            throw new UnauthorizedException("User not authenticated");
-        }
         Coordinates existingCoordinates = coordinatesRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Coordinates not found with ID: " + id));
 
-        if (!UserRole.ADMIN.equals(currentUser.getRole()) &&
-                (existingCoordinates.getCreatedBy() == null
-                        || !existingCoordinates.getCreatedBy().getId().equals(currentUser.getId()))) {
-            throw new ForbiddenException("Access denied");
-        }
+        Long creatorId = existingCoordinates.getCreatedBy() != null ? existingCoordinates.getCreatedBy().getId() : null;
+        authorizationService.requireCanModifyOrAdmin(currentUser, creatorId);
 
         coordinatesMapper.updateEntity(existingCoordinates, coordinatesUpdateDto);
         Coordinates savedCoordinates = coordinatesRepository.save(existingCoordinates);
@@ -72,17 +63,12 @@ public class CoordinatesService {
 
     @Transactional
     public DeleteResponse deleteCoordinates(Long id, User currentUser) {
-        if (currentUser == null) {
-            throw new UnauthorizedException("User not authenticated");
-        }
         Coordinates coordinates = coordinatesRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Coordinates not found with ID: " + id));
 
-        if (!UserRole.ADMIN.equals(currentUser.getRole()) &&
-                (coordinates.getCreatedBy() == null
-                        || !coordinates.getCreatedBy().getId().equals(currentUser.getId()))) {
-            throw new ForbiddenException("Access denied");
-        }
+        Long creatorId = coordinates.getCreatedBy() != null ? coordinates.getCreatedBy().getId() : null;
+        authorizationService.requireCanModifyOrAdmin(currentUser, creatorId);
+
         coordinatesRepository.deleteById(id);
         changeEventPublisher.publish("coordinates", ChangeEvent.Operation.DELETE, id);
         return DeleteResponse.builder()
