@@ -179,25 +179,27 @@ export default function CrudPage<T extends { id: number } & EntityWithCreator>({
             canEdit={(row) => canEditEntity(row, currentUser?.id ?? null, currentUser?.role ?? null)}
             canDelete={(row) => canDeleteEntity(row, currentUser?.id ?? null, currentUser?.role ?? null)}
           />
-          <Stack direction="horizontal" gap={2} className="align-items-center">
-            <Button
-              variant="outline-secondary"
-              disabled={page === 0}
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-            >
-              Prev
-            </Button>
-            <span>
-              Page {data.number + 1} / {data.totalPages}
-            </span>
-            <Button
-              variant="outline-secondary"
-              disabled={data.number + 1 >= data.totalPages}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Next
-            </Button>
-          </Stack>
+          {data.totalPages > 1 && (
+            <Stack direction="horizontal" gap={2} className="align-items-center">
+              <Button
+                variant="outline-secondary"
+                disabled={page === 0}
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+              >
+                Prev
+              </Button>
+              <span>
+                Page {data.number + 1} / {data.totalPages}
+              </span>
+              <Button
+                variant="outline-secondary"
+                disabled={data.number + 1 >= data.totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Next
+              </Button>
+            </Stack>
+          )}
         </>
       )}
 
