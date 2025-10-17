@@ -2,13 +2,18 @@ import "bootstrap/dist/css/bootstrap.min.css";
 
 import { Container, Nav, Navbar } from "react-bootstrap";
 import { IoTicket } from "react-icons/io5";
+import { useSelector } from "react-redux";
 import { Link, Route, Routes } from "react-router-dom";
 
 import AuthButtons from "@auth/components/AuthButtons";
 import DarkModeToggle from "@components/DarkModeToggle";
 import routes from "@routes";
+import { RootState } from "@store";
 
 export default function App() {
+  const auth = useSelector((state: RootState) => state.auth);
+  const isAdmin = auth.user?.role === "ADMIN";
+
   return (
     <Container>
       <Navbar expand="lg" className="bg-body-tertiary rounded mb-3">
@@ -37,6 +42,11 @@ export default function App() {
               <Nav.Link as={Link} to="/coordinates">
                 Coordinates
               </Nav.Link>
+              {isAdmin && (
+                <Nav.Link as={Link} to="/admin-role-requests">
+                  Admin Requests
+                </Nav.Link>
+              )}
             </Nav>
             <Nav className="d-flex align-items-center">
               <div className="me-3">

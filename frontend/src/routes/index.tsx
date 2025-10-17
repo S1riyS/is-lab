@@ -1,5 +1,6 @@
 import React from "react";
 
+import AdminRoleRequestsPage from "@adminRoleRequests/pages/AdminRoleRequestsPage";
 import NotFoundPage from "@common/pages/NotFoundPage";
 import CoordinatesDetailPage from "@coordinates/pages/CoordinatesDetailPage";
 import CoordinatesPage from "@coordinates/pages/CoordinatesPage";
@@ -32,6 +33,7 @@ const routes: AppRoute[] = [
   { path: "/coordinates", element: <CoordinatesPage /> },
   { path: "/coordinates/:id", element: <CoordinatesDetailPage /> },
   { path: "/users", element: <UsersPage /> },
+  { path: "/admin-role-requests", element: <AdminRoleRequestsPage /> },
   { path: "/*", element: <NotFoundPage /> },
 ];
 

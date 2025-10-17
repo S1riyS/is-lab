@@ -35,6 +35,7 @@ export const baseApi = createApi({
     "Events",
     "Venues",
     "Users",
+    "AdminRoleRequests",
   ],
   endpoints: () => ({}),
   refetchOnFocus: true,

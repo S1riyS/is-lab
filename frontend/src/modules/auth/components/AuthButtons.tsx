@@ -15,6 +15,7 @@ import {
 import { FaUser } from "react-icons/fa";
 import { useSelector } from "react-redux";
 
+import RequestAdminRoleButton from "@adminRoleRequests/components/RequestAdminRoleButton";
 import { showErrorToast } from "@common/api/baseApi";
 import { RootState, useAppDispatch } from "@store";
 
@@ -63,11 +64,16 @@ export default function AuthButtons() {
   }
 
   if (auth.user) {
+    const isAdmin = auth.user.role === "ADMIN";
+    const isUser = auth.user.role === "USER";
+
     return (
-      <Stack direction="horizontal" gap={3} className="align-items-center">
+      <Stack direction="horizontal" gap={2} className="align-items-center flex-wrap">
         <span>
-          <FaUser /> {auth.user.username}
+          <FaUser /> {auth.user.username}{" "}
+          {isAdmin && <Badge bg="danger">Admin</Badge>}
         </span>
+        {isUser && <RequestAdminRoleButton />}
         <Button variant="outline-danger" size="sm" onClick={handleLogout}>
           Log out
         </Button>

@@ -5,7 +5,7 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
-define: {
+  define: {
     global: 'globalThis',
   },
   resolve: {
@@ -13,6 +13,7 @@ define: {
       "@": path.resolve(__dirname, "./src"),
       "@common": path.resolve(__dirname, "./src/modules/common"),
       "@auth": path.resolve(__dirname, "./src/modules/auth"),
+      "@adminRoleRequests": path.resolve(__dirname, "./src/modules/adminRoleRequests"),
       "@coordinates": path.resolve(__dirname, "./src/modules/coordinates"),
       "@events": path.resolve(__dirname, "./src/modules/events"),
       "@locations": path.resolve(__dirname, "./src/modules/locations"),
