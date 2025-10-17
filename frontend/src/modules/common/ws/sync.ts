@@ -39,15 +39,11 @@ export function initSync(store: Store) {
                         const mapping = entityToTags[event.entity];
                         if (!mapping) return;
 
+                        // Invalidate the the following RTK Query ids: "LIST" and {id of entity}
                         store.dispatch(baseApi.util.invalidateTags([{ type: mapping.list, id: "LIST" }] as any));
-                        if (event.operation === "CREATE" || event.operation === "UPDATE") {
-                            store.dispatch(baseApi.util.invalidateTags(mapping.single(event.id) as any));
-                        }
-                        if (event.operation === "DELETE") {
-                            store.dispatch(baseApi.util.invalidateTags(mapping.single(event.id) as any));
-                        }
+                        store.dispatch(baseApi.util.invalidateTags(mapping.single(event.id) as any));
                     } catch {
-                        // ignore
+                        console.error("Error parsing change event", message.body);
                     }
                 });
             },
@@ -59,7 +55,7 @@ export function initSync(store: Store) {
             try {
                 client.deactivate();
             } catch {
-                // ignore
+                console.error("Error deactivating WebSocket client");
             }
         };
     } catch {

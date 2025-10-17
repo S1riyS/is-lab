@@ -13,10 +13,5 @@ public class ChangeEventPublisher {
     public void publish(String entity, ChangeEvent.Operation op, Long id) {
         ChangeEvent event = new ChangeEvent(entity, op, id);
         messagingTemplate.convertAndSend("/topic/changes", event);
-        // Also send to entity-specific topic for more granular subscriptions
-        messagingTemplate.convertAndSend("/topic/" + entity.toLowerCase(), event);
     }
 }
-
-
-
