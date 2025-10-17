@@ -136,7 +136,7 @@ public class TicketService {
                 .orElseThrow(() -> new NotFoundException("Ticket not found with ID: " + id));
 
         // Check permissions
-        if (!currentUser.getRole().equals(UserRole.ADMIN) &&
+        if (!UserRole.ADMIN.equals(currentUser.getRole()) &&
                 !existingTicket.getCreatedBy().getId().equals(currentUser.getId())) {
             throw new ForbiddenException("You don't have permission to update this ticket");
         }
@@ -199,7 +199,7 @@ public class TicketService {
                 .orElseThrow(() -> new NotFoundException("Ticket not found with ID: " + id));
 
         // Check permissions
-        if (!currentUser.getRole().equals(UserRole.ADMIN) &&
+        if (!UserRole.ADMIN.equals(currentUser.getRole()) &&
                 !ticket.getCreatedBy().getId().equals(currentUser.getId())) {
             throw new ForbiddenException("You don't have permission to delete this ticket");
         }

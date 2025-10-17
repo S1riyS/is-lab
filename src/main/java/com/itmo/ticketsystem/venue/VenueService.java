@@ -42,8 +42,9 @@ public class VenueService {
     }
 
     @Transactional
-    public VenueDto createVenue(VenueCreateDto venueCreateDto) {
+    public VenueDto createVenue(VenueCreateDto venueCreateDto, User currentUser) {
         Venue venue = venueMapper.toEntity(venueCreateDto);
+        venue.setCreatedBy(currentUser);
         Venue savedVenue = venueRepository.save(venue);
         VenueDto dto = venueMapper.toDto(savedVenue);
         changeEventPublisher.publish("venues", ChangeEvent.Operation.CREATE, dto.getId());
@@ -55,11 +56,14 @@ public class VenueService {
         if (currentUser == null) {
             throw new UnauthorizedException("User not authenticated");
         }
-        if (!currentUser.getRole().equals(UserRole.ADMIN)) {
-            throw new ForbiddenException("Admin role required");
-        }
         Venue existingVenue = venueRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Venue not found with ID: " + id));
+
+        if (!UserRole.ADMIN.equals(currentUser.getRole()) &&
+                (existingVenue.getCreatedBy() == null
+                        || !existingVenue.getCreatedBy().getId().equals(currentUser.getId()))) {
+            throw new ForbiddenException("Access denied");
+        }
 
         venueMapper.updateEntity(existingVenue, venueUpdateDto);
         Venue savedVenue = venueRepository.save(existingVenue);
@@ -73,11 +77,12 @@ public class VenueService {
         if (currentUser == null) {
             throw new UnauthorizedException("User not authenticated");
         }
-        if (!currentUser.getRole().equals(UserRole.ADMIN)) {
-            throw new ForbiddenException("Admin role required");
-        }
-        if (!venueRepository.existsById(id)) {
-            throw new NotFoundException("Venue not found with ID: " + id);
+        Venue venue = venueRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Venue not found with ID: " + id));
+
+        if (!UserRole.ADMIN.equals(currentUser.getRole()) &&
+                (venue.getCreatedBy() == null || !venue.getCreatedBy().getId().equals(currentUser.getId()))) {
+            throw new ForbiddenException("Access denied");
         }
         venueRepository.deleteById(id);
         changeEventPublisher.publish("venues", ChangeEvent.Operation.DELETE, id);

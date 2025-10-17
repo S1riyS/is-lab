@@ -46,9 +46,10 @@ public class PersonService {
     }
 
     @Transactional
-    public PersonDto createPerson(PersonCreateDto personCreateDto) {
+    public PersonDto createPerson(PersonCreateDto personCreateDto, User currentUser) {
         Person person = personMapper.toEntity(personCreateDto);
         person.setLocation(locationRepository.getReferenceById(personCreateDto.getLocationId()));
+        person.setCreatedBy(currentUser);
         Person savedPerson = personRepository.save(person);
         PersonDto dto = personMapper.toDto(savedPerson);
         changeEventPublisher.publish("persons", ChangeEvent.Operation.CREATE, dto.getId());
@@ -60,11 +61,14 @@ public class PersonService {
         if (currentUser == null) {
             throw new UnauthorizedException("User not authenticated");
         }
-        if (!currentUser.getRole().equals(UserRole.ADMIN)) {
-            throw new ForbiddenException("Admin role required");
-        }
         Person existingPerson = personRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Person not found with ID: " + id));
+
+        if (!UserRole.ADMIN.equals(currentUser.getRole()) &&
+                (existingPerson.getCreatedBy() == null
+                        || !existingPerson.getCreatedBy().getId().equals(currentUser.getId()))) {
+            throw new ForbiddenException("Access denied");
+        }
 
         personMapper.updateEntity(existingPerson, personUpdateDto);
 
@@ -83,11 +87,12 @@ public class PersonService {
         if (currentUser == null) {
             throw new UnauthorizedException("User not authenticated");
         }
-        if (!currentUser.getRole().equals(UserRole.ADMIN)) {
-            throw new ForbiddenException("Admin role required");
-        }
-        if (!personRepository.existsById(id)) {
-            throw new NotFoundException("Person not found with ID: " + id);
+        Person person = personRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Person not found with ID: " + id));
+
+        if (!UserRole.ADMIN.equals(currentUser.getRole()) &&
+                (person.getCreatedBy() == null || !person.getCreatedBy().getId().equals(currentUser.getId()))) {
+            throw new ForbiddenException("Access denied");
         }
         personRepository.deleteById(id);
         changeEventPublisher.publish("persons", ChangeEvent.Operation.DELETE, id);

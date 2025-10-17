@@ -2,6 +2,7 @@ package com.itmo.ticketsystem.venue;
 
 import com.itmo.ticketsystem.common.VenueType;
 import com.itmo.ticketsystem.ticket.Ticket;
+import com.itmo.ticketsystem.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.NotBlank;
@@ -38,6 +39,10 @@ public class Venue {
     @Column(name = "type")
     @NotNull(message = "Venue type cannot be null")
     private VenueType type;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
+    private User createdBy;
 
     @OneToMany(mappedBy = "venue", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Ticket> tickets = new ArrayList<>();

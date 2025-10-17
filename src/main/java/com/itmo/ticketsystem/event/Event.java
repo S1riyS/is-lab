@@ -1,6 +1,7 @@
 package com.itmo.ticketsystem.event;
 
 import com.itmo.ticketsystem.ticket.Ticket;
+import com.itmo.ticketsystem.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.NotBlank;
@@ -39,6 +40,10 @@ public class Event {
     @Column(name = "description")
     @NotNull(message = "Description cannot be null")
     private String description;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
+    private User createdBy;
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Ticket> tickets = new ArrayList<>();

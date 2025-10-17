@@ -3,8 +3,8 @@ package com.itmo.ticketsystem.coordinates;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.itmo.ticketsystem.ticket.Ticket;
+import com.itmo.ticketsystem.user.User;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
@@ -31,6 +31,10 @@ public class Coordinates {
     @Column(name = "y")
     @NotNull(message = "Y coordinate cannot be null")
     private Float y;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
+    private User createdBy;
 
     @OneToMany(mappedBy = "coordinates", cascade = CascadeType.ALL, orphanRemoval = true)
     // @JsonIgnore

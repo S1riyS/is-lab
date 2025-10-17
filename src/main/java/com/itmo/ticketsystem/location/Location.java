@@ -1,5 +1,6 @@
 package com.itmo.ticketsystem.location;
 
+import com.itmo.ticketsystem.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -30,4 +31,8 @@ public class Location {
 
     @Column(name = "name")
     private String name;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
+    private User createdBy;
 }

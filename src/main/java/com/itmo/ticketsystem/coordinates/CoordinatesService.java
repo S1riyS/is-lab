@@ -40,8 +40,9 @@ public class CoordinatesService {
     }
 
     @Transactional
-    public CoordinatesDto createCoordinates(CoordinatesCreateDto coordinatesCreateDto) {
+    public CoordinatesDto createCoordinates(CoordinatesCreateDto coordinatesCreateDto, User currentUser) {
         Coordinates coordinates = coordinatesMapper.toEntity(coordinatesCreateDto);
+        coordinates.setCreatedBy(currentUser);
         Coordinates savedCoordinates = coordinatesRepository.save(coordinates);
         CoordinatesDto dto = coordinatesMapper.toDto(savedCoordinates);
         changeEventPublisher.publish("coordinates", ChangeEvent.Operation.CREATE, dto.getId());
@@ -53,11 +54,14 @@ public class CoordinatesService {
         if (currentUser == null) {
             throw new UnauthorizedException("User not authenticated");
         }
-        if (!currentUser.getRole().equals(UserRole.ADMIN)) {
-            throw new ForbiddenException("Admin role required");
-        }
         Coordinates existingCoordinates = coordinatesRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Coordinates not found with ID: " + id));
+
+        if (!UserRole.ADMIN.equals(currentUser.getRole()) &&
+                (existingCoordinates.getCreatedBy() == null
+                        || !existingCoordinates.getCreatedBy().getId().equals(currentUser.getId()))) {
+            throw new ForbiddenException("Access denied");
+        }
 
         coordinatesMapper.updateEntity(existingCoordinates, coordinatesUpdateDto);
         Coordinates savedCoordinates = coordinatesRepository.save(existingCoordinates);
@@ -71,11 +75,13 @@ public class CoordinatesService {
         if (currentUser == null) {
             throw new UnauthorizedException("User not authenticated");
         }
-        if (!currentUser.getRole().equals(UserRole.ADMIN)) {
-            throw new ForbiddenException("Admin role required");
-        }
-        if (!coordinatesRepository.existsById(id)) {
-            throw new NotFoundException("Coordinates not found with ID: " + id);
+        Coordinates coordinates = coordinatesRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Coordinates not found with ID: " + id));
+
+        if (!UserRole.ADMIN.equals(currentUser.getRole()) &&
+                (coordinates.getCreatedBy() == null
+                        || !coordinates.getCreatedBy().getId().equals(currentUser.getId()))) {
+            throw new ForbiddenException("Access denied");
         }
         coordinatesRepository.deleteById(id);
         changeEventPublisher.publish("coordinates", ChangeEvent.Operation.DELETE, id);

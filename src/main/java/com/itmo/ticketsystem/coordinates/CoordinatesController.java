@@ -13,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import com.itmo.ticketsystem.user.User;
 import jakarta.validation.Valid;
 
 @RestController
@@ -39,7 +40,8 @@ public class CoordinatesController {
     @PostMapping
     public ResponseEntity<CoordinatesDto> createCoordinates(
             @Valid @RequestBody CoordinatesCreateDto coordinatesCreateDto) {
-        CoordinatesDto createdCoordinates = coordinatesService.createCoordinates(coordinatesCreateDto);
+        CoordinatesDto createdCoordinates = coordinatesService.createCoordinates(coordinatesCreateDto,
+                getCurrentUser());
         return ResponseEntity.ok(createdCoordinates);
     }
 
@@ -57,10 +59,11 @@ public class CoordinatesController {
         return ResponseEntity.ok(response);
     }
 
-    private com.itmo.ticketsystem.user.User getCurrentUser() {
+    private User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated()) {
-            return new com.itmo.ticketsystem.user.User();
+        if (authentication != null && authentication.isAuthenticated()
+                && authentication.getPrincipal() instanceof User) {
+            return (User) authentication.getPrincipal();
         }
         return null;
     }

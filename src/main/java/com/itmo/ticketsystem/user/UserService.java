@@ -135,8 +135,8 @@ public class UserService {
         if (currentUser == null) {
             throw new UnauthorizedException("User not authenticated");
         }
-        if (!currentUser.getRole().equals(UserRole.ADMIN)) {
-            throw new ForbiddenException("Admin role required");
+        if (!UserRole.ADMIN.equals(currentUser.getRole())) {
+            throw new ForbiddenException("Access denied");
         }
     }
 
@@ -144,7 +144,7 @@ public class UserService {
         if (currentUser == null) {
             throw new UnauthorizedException("User not authenticated");
         }
-        if (!currentUser.getRole().equals(UserRole.ADMIN) && !currentUser.getId().equals(targetUserId)) {
+        if (!UserRole.ADMIN.equals(currentUser.getRole()) && !currentUser.getId().equals(targetUserId)) {
             throw new ForbiddenException("Access denied");
         }
     }

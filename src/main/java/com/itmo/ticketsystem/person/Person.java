@@ -4,6 +4,7 @@ import com.itmo.ticketsystem.common.Color;
 import com.itmo.ticketsystem.common.Country;
 import com.itmo.ticketsystem.location.Location;
 import com.itmo.ticketsystem.ticket.Ticket;
+import com.itmo.ticketsystem.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -47,6 +48,10 @@ public class Person {
     @Column(name = "nationality")
     @NotNull(message = "Nationality cannot be null")
     private Country nationality;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
+    private User createdBy;
 
     @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Ticket> tickets = new ArrayList<>();

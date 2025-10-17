@@ -42,8 +42,9 @@ public class EventService {
     }
 
     @Transactional
-    public EventDto createEvent(EventCreateDto eventCreateDto) {
+    public EventDto createEvent(EventCreateDto eventCreateDto, User currentUser) {
         Event event = eventMapper.toEntity(eventCreateDto);
+        event.setCreatedBy(currentUser);
         Event savedEvent = eventRepository.save(event);
         EventDto dto = eventMapper.toDto(savedEvent);
         changeEventPublisher.publish("events", ChangeEvent.Operation.CREATE, dto.getId());
@@ -55,11 +56,14 @@ public class EventService {
         if (currentUser == null) {
             throw new UnauthorizedException("User not authenticated");
         }
-        if (!currentUser.getRole().equals(UserRole.ADMIN)) {
-            throw new ForbiddenException("Admin role required");
-        }
         Event existingEvent = eventRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Event not found with ID: " + id));
+
+        if (!UserRole.ADMIN.equals(currentUser.getRole()) &&
+                (existingEvent.getCreatedBy() == null
+                        || !existingEvent.getCreatedBy().getId().equals(currentUser.getId()))) {
+            throw new ForbiddenException("Access denied");
+        }
 
         eventMapper.updateEntity(existingEvent, eventUpdateDto);
         Event savedEvent = eventRepository.save(existingEvent);
@@ -73,11 +77,12 @@ public class EventService {
         if (currentUser == null) {
             throw new UnauthorizedException("User not authenticated");
         }
-        if (!currentUser.getRole().equals(UserRole.ADMIN)) {
-            throw new ForbiddenException("Admin role required");
-        }
-        if (!eventRepository.existsById(id)) {
-            throw new NotFoundException("Event not found with ID: " + id);
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Event not found with ID: " + id));
+
+        if (!UserRole.ADMIN.equals(currentUser.getRole()) &&
+                (event.getCreatedBy() == null || !event.getCreatedBy().getId().equals(currentUser.getId()))) {
+            throw new ForbiddenException("Access denied");
         }
         eventRepository.deleteById(id);
         changeEventPublisher.publish("events", ChangeEvent.Operation.DELETE, id);

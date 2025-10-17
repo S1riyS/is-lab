@@ -14,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import com.itmo.ticketsystem.user.User;
 import jakarta.validation.Valid;
 import java.util.List;
 
@@ -47,7 +48,7 @@ public class VenueController {
 
     @PostMapping
     public ResponseEntity<VenueDto> createVenue(@Valid @RequestBody VenueCreateDto venueCreateDto) {
-        VenueDto createdVenue = venueService.createVenue(venueCreateDto);
+        VenueDto createdVenue = venueService.createVenue(venueCreateDto, getCurrentUser());
         return ResponseEntity.ok(createdVenue);
     }
 
@@ -64,10 +65,11 @@ public class VenueController {
         return ResponseEntity.ok(response);
     }
 
-    private com.itmo.ticketsystem.user.User getCurrentUser() {
+    private User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated()) {
-            return new com.itmo.ticketsystem.user.User();
+        if (authentication != null && authentication.isAuthenticated()
+                && authentication.getPrincipal() instanceof User) {
+            return (User) authentication.getPrincipal();
         }
         return null;
     }

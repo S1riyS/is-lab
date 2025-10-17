@@ -14,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import com.itmo.ticketsystem.user.User;
 import jakarta.validation.Valid;
 import java.util.List;
 
@@ -47,7 +48,7 @@ public class LocationController {
 
     @PostMapping
     public ResponseEntity<LocationDto> createLocation(@Valid @RequestBody LocationCreateDto locationCreateDto) {
-        LocationDto createdLocation = locationService.createLocation(locationCreateDto);
+        LocationDto createdLocation = locationService.createLocation(locationCreateDto, getCurrentUser());
         return ResponseEntity.ok(createdLocation);
     }
 
@@ -64,10 +65,11 @@ public class LocationController {
         return ResponseEntity.ok(response);
     }
 
-    private com.itmo.ticketsystem.user.User getCurrentUser() {
+    private User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated()) {
-            return new com.itmo.ticketsystem.user.User();
+        if (authentication != null && authentication.isAuthenticated()
+                && authentication.getPrincipal() instanceof User) {
+            return (User) authentication.getPrincipal();
         }
         return null;
     }

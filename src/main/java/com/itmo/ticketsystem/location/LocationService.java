@@ -42,8 +42,9 @@ public class LocationService {
     }
 
     @Transactional
-    public LocationDto createLocation(LocationCreateDto locationCreateDto) {
+    public LocationDto createLocation(LocationCreateDto locationCreateDto, User currentUser) {
         Location location = locationMapper.toEntity(locationCreateDto);
+        location.setCreatedBy(currentUser);
         Location savedLocation = locationRepository.save(location);
         LocationDto dto = locationMapper.toDto(savedLocation);
         changeEventPublisher.publish("locations", ChangeEvent.Operation.CREATE, dto.getId());
@@ -55,11 +56,14 @@ public class LocationService {
         if (currentUser == null) {
             throw new UnauthorizedException("User not authenticated");
         }
-        if (!currentUser.getRole().equals(UserRole.ADMIN)) {
-            throw new ForbiddenException("Admin role required");
-        }
         Location existingLocation = locationRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Location not found with ID: " + id));
+
+        if (!UserRole.ADMIN.equals(currentUser.getRole()) &&
+                (existingLocation.getCreatedBy() == null
+                        || !existingLocation.getCreatedBy().getId().equals(currentUser.getId()))) {
+            throw new ForbiddenException("Access denied");
+        }
 
         locationMapper.updateEntity(existingLocation, locationUpdateDto);
         Location savedLocation = locationRepository.save(existingLocation);
@@ -73,11 +77,12 @@ public class LocationService {
         if (currentUser == null) {
             throw new UnauthorizedException("User not authenticated");
         }
-        if (!currentUser.getRole().equals(UserRole.ADMIN)) {
-            throw new ForbiddenException("Admin role required");
-        }
-        if (!locationRepository.existsById(id)) {
-            throw new NotFoundException("Location not found with ID: " + id);
+        Location location = locationRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Location not found with ID: " + id));
+
+        if (!UserRole.ADMIN.equals(currentUser.getRole()) &&
+                (location.getCreatedBy() == null || !location.getCreatedBy().getId().equals(currentUser.getId()))) {
+            throw new ForbiddenException("Access denied");
         }
         locationRepository.deleteById(id);
         changeEventPublisher.publish("locations", ChangeEvent.Operation.DELETE, id);
