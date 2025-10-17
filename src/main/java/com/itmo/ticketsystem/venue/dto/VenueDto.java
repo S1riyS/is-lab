@@ -26,4 +26,6 @@ public class VenueDto extends BaseEntityDto {
 
     @NotNull(message = "Venue type cannot be null")
     private VenueType type;
+
+    private Long createdByUserId;
 }

@@ -1,9 +1,12 @@
 // src/modules/venues/pages/VenueDetailPage.tsx
 import { Alert, Button, Col, Container, Row, Spinner } from "react-bootstrap";
+import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 
 import DetailPageActions from "@common/components/DetailPageActions";
 import EntityDetail from "@common/components/EntityDetail";
+import { canEditEntity, canDeleteEntity } from "@common/utils/permissions";
+import { RootState } from "@store/index";
 
 import {
   useDeleteVenueMutation,
@@ -17,6 +20,7 @@ export default function VenueDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const venueId = parseInt(id || "0", 10);
+  const currentUser = useSelector((state: RootState) => state.auth.user);
 
   const {
     data: venue,
@@ -73,6 +77,8 @@ export default function VenueDetailPage() {
                 useDeleteMutation={useDeleteVenueMutation}
                 onDeleteSuccess={() => navigate("/venues")}
                 refetch={refetchVenue}
+                canEdit={canEditEntity(venue, currentUser?.id ?? null, currentUser?.role ?? null)}
+                canDelete={canDeleteEntity(venue, currentUser?.id ?? null, currentUser?.role ?? null)}
               />
             )}
           </div>

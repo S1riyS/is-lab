@@ -1,9 +1,12 @@
 // src/modules/coordinates/pages/CoordinatesDetailPage.tsx
 import { Alert, Button, Col, Container, Row, Spinner } from "react-bootstrap";
+import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 
 import DetailPageActions from "@common/components/DetailPageActions";
 import EntityDetail from "@common/components/EntityDetail";
+import { canEditEntity, canDeleteEntity } from "@common/utils/permissions";
+import { RootState } from "@store/index";
 
 import {
   useDeleteCoordinatesMutation,
@@ -17,6 +20,7 @@ export default function CoordinatesDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const coordinatesId = parseInt(id || "0", 10);
+  const currentUser = useSelector((state: RootState) => state.auth.user);
 
   const {
     data: coordinates,
@@ -83,6 +87,8 @@ export default function CoordinatesDetailPage() {
               useDeleteMutation={useDeleteCoordinatesMutation}
               onDeleteSuccess={() => navigate("/coordinates")}
               refetch={refetchCoordinates}
+              canEdit={canEditEntity(coordinates, currentUser?.id ?? null, currentUser?.role ?? null)}
+              canDelete={canDeleteEntity(coordinates, currentUser?.id ?? null, currentUser?.role ?? null)}
             />
           </Col>
         )}

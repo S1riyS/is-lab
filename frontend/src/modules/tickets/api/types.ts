@@ -18,8 +18,8 @@ export type TicketDto = {
   number?: number | null;
   comment: string;
   venueId?: number | null;
-  createdById?: number | null;
-  updatedById?: number | null;
+  createdByUserId?: number | null;
+  updatedByUserId?: number | null;
   updatedAt?: string | null; // Date
 };
 

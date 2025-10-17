@@ -1,9 +1,12 @@
 // src/modules/persons/pages/PersonDetailPage.tsx
 import { Alert, Button, Col, Container, Row, Spinner } from "react-bootstrap";
+import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 
 import DetailPageActions from "@common/components/DetailPageActions";
 import EntityDetail, { EntityField } from "@common/components/EntityDetail";
+import { canEditEntity, canDeleteEntity } from "@common/utils/permissions";
+import { RootState } from "@store/index";
 import { useGetLocationQuery } from "@locations/api/locationsApi";
 import { createLocationFields } from "@locations/config/locationFieldsConfig";
 
@@ -19,6 +22,7 @@ export default function PersonDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const personId = parseInt(id || "0", 10);
+  const currentUser = useSelector((state: RootState) => state.auth.user);
 
   const {
     data: person,
@@ -133,6 +137,8 @@ export default function PersonDetailPage() {
                 useDeleteMutation={useDeletePersonMutation}
                 onDeleteSuccess={() => navigate("/persons")}
                 refetch={refetchPerson}
+                canEdit={canEditEntity(person, currentUser?.id ?? null, currentUser?.role ?? null)}
+                canDelete={canDeleteEntity(person, currentUser?.id ?? null, currentUser?.role ?? null)}
               />
             )}
           </div>

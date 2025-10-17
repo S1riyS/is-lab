@@ -17,10 +17,13 @@ import {
 } from "react-bootstrap";
 import { IoIosAddCircle, IoMdCreate } from "react-icons/io";
 import { MdAdd } from "react-icons/md";
+import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
 import { showErrorToast } from "@common/api/baseApi";
 import { CrudConfig } from "@common/types/crudConfig";
+import { canDeleteEntity, canEditEntity, EntityWithCreator } from "@common/utils/permissions";
+import { RootState } from "@store/index";
 
 import CrudTable from "./CrudTable";
 import { FormRenderer } from "./FormRenderer";
@@ -29,10 +32,12 @@ interface CrudPageProps<T extends { id: number }> {
   config: CrudConfig<T>;
 }
 
-export default function CrudPage<T extends { id: number }>({
+export default function CrudPage<T extends { id: number } & EntityWithCreator>({
   config,
 }: CrudPageProps<T>) {
   const navigate = useNavigate();
+  const currentUser = useSelector((state: RootState) => state.auth.user);
+
   const [page, setPage] = useState(0);
   const [size] = useState(10);
   const [search, setSearch] = useState("");
@@ -171,6 +176,8 @@ export default function CrudPage<T extends { id: number }>({
             onSort={handleSort}
             sortColumn={sortColumn}
             sortDirection={sortDirection}
+            canEdit={(row) => canEditEntity(row, currentUser?.id ?? null, currentUser?.role ?? null)}
+            canDelete={(row) => canDeleteEntity(row, currentUser?.id ?? null, currentUser?.role ?? null)}
           />
           <Stack direction="horizontal" gap={2} className="align-items-center">
             <Button

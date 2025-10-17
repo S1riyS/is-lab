@@ -25,7 +25,7 @@ public class TicketDto extends BaseEntityDto {
     private Double number;
     private String comment;
     private Long venueId;
-    private Long createdById;
-    private Long updatedById;
+    private Long createdByUserId;
+    private Long updatedByUserId;
     private Date updatedAt;
 }

@@ -19,6 +19,7 @@ public class LocationMapper {
         dto.setY(location.getY());
         dto.setZ(location.getZ());
         dto.setName(location.getName());
+        dto.setCreatedByUserId(location.getCreatedBy() != null ? location.getCreatedBy().getId() : null);
         return dto;
     }
 

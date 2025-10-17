@@ -19,6 +19,7 @@ public class EventMapper {
         dto.setDate(event.getDate());
         dto.setMinAge(event.getMinAge());
         dto.setDescription(event.getDescription());
+        dto.setCreatedByUserId(event.getCreatedBy() != null ? event.getCreatedBy().getId() : null);
         return dto;
     }
 

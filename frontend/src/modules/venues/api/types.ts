@@ -9,6 +9,7 @@ export type VenueDto = {
   name: string;
   capacity: number;
   type: VenueType;
+  createdByUserId?: number | null;
 };
 
 export type VenueCreateDto = {

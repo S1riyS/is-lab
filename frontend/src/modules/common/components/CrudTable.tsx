@@ -18,6 +18,8 @@ type Props<T> = {
   onSort?: (column: string, direction: 'asc' | 'desc') => void;
   sortColumn?: string;
   sortDirection?: 'asc' | 'desc';
+  canEdit?: (row: T) => boolean;
+  canDelete?: (row: T) => boolean;
 };
 
 export default function CrudTable<T extends { id?: number | string }>({
@@ -30,6 +32,8 @@ export default function CrudTable<T extends { id?: number | string }>({
   onSort,
   sortColumn,
   sortDirection,
+  canEdit,
+  canDelete,
 }: Props<T>) {
   return (
     <div className="table-responsive">
@@ -95,6 +99,7 @@ export default function CrudTable<T extends { id?: number | string }>({
                           e.stopPropagation();
                           onEdit(row);
                         }}
+                        disabled={canEdit ? !canEdit(row) : false}
                       >
                         Edit
                       </button>
@@ -107,6 +112,7 @@ export default function CrudTable<T extends { id?: number | string }>({
                           e.stopPropagation();
                           onDelete(row);
                         }}
+                        disabled={canDelete ? !canDelete(row) : false}
                       >
                         Delete
                       </button>

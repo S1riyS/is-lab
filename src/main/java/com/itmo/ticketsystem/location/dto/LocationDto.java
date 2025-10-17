@@ -15,4 +15,5 @@ public class LocationDto extends BaseEntityDto {
     private Float y;
     private Long z;
     private String name;
+    private Long createdByUserId;
 }

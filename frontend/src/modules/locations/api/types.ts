@@ -4,6 +4,7 @@ export type LocationDto = {
   y: number; // Float
   z: number; // Long
   name?: string | null;
+  createdByUserId?: number | null;
 };
 
 export type LocationCreateDto = {

@@ -4,6 +4,7 @@ export type EventDto = {
   date?: string | null; // ZonedDateTime
   minAge?: number | null;
   description?: string | null;
+  createdByUserId?: number | null;
 };
 
 export type EventCreateDto = {

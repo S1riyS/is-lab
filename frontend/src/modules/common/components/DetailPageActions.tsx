@@ -26,6 +26,8 @@ interface DetailPageActionsProps<T extends { id: number }> {
   onUpdateSuccess?: () => void;
   onDeleteSuccess?: () => void;
   refetch?: () => void;
+  canEdit?: boolean;
+  canDelete?: boolean;
 }
 
 export default function DetailPageActions<T extends { id: number }>({
@@ -37,6 +39,8 @@ export default function DetailPageActions<T extends { id: number }>({
   onUpdateSuccess,
   onDeleteSuccess,
   refetch,
+  canEdit = true,
+  canDelete = true,
 }: DetailPageActionsProps<T>) {
   const [update] = useUpdateMutation();
   const [remove] = useDeleteMutation();
@@ -87,11 +91,16 @@ export default function DetailPageActions<T extends { id: number }>({
             setShowEdit(true);
             setEditForm(entity);
           }}
+          disabled={!canEdit}
         >
           {/* Edit {entityName} */}
           <MdModeEdit /> Edit
         </Button>
-        <Button variant="outline-danger" onClick={() => setShowDelete(true)}>
+        <Button
+          variant="outline-danger"
+          onClick={() => setShowDelete(true)}
+          disabled={!canDelete}
+        >
           {/* Delete {entityName} */}
           <MdDelete /> Delete
         </Button>

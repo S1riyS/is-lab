@@ -18,4 +18,5 @@ public class PersonDto extends BaseEntityDto {
     private Long locationId;
     private String passportID;
     private Country nationality;
+    private Long createdByUserId;
 }

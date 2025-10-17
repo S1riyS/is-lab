@@ -20,6 +20,7 @@ public class PersonMapper {
         dto.setLocationId(person.getLocation() != null ? person.getLocation().getId() : null);
         dto.setPassportID(person.getPassportID());
         dto.setNationality(person.getNationality());
+        dto.setCreatedByUserId(person.getCreatedBy() != null ? person.getCreatedBy().getId() : null);
         return dto;
     }
 

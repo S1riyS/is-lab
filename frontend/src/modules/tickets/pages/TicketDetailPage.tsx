@@ -1,9 +1,12 @@
 // src/modules/tickets/pages/TicketDetailPage.tsx
 import { Alert, Button, Col, Container, Row, Spinner } from "react-bootstrap";
+import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 
 import DetailPageActions from "@common/components/DetailPageActions";
 import EntityDetail, { EntityField } from "@common/components/EntityDetail";
+import { canEditEntity, canDeleteEntity } from "@common/utils/permissions";
+import { RootState } from "@store/index";
 import { useGetCoordinatesQuery } from "@coordinates/api/coordinatesApi";
 import { createCoordinatesFields } from "@coordinates/config/coordinatesFieldsConfig";
 import { useGetEventQuery } from "@events/api/eventsApi";
@@ -27,6 +30,7 @@ export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const ticketId = parseInt(id || "0", 10);
+  const currentUser = useSelector((state: RootState) => state.auth.user);
 
   const {
     data: ticket,
@@ -97,14 +101,14 @@ export default function TicketDetailPage() {
 
   const personFields = person
     ? [
-        ...createPersonFields(person),
-        {
-          key: "location",
-          label: "Location",
-          value: null,
-          nestedComponent: locationComponent,
-        },
-      ]
+      ...createPersonFields(person),
+      {
+        key: "location",
+        label: "Location",
+        value: null,
+        nestedComponent: locationComponent,
+      },
+    ]
     : [];
 
   const personComponent = person ? (
@@ -207,23 +211,23 @@ export default function TicketDetailPage() {
     // Optional nested components
     ...(ticket?.eventId
       ? [
-          {
-            key: "event",
-            label: "Event",
-            value: null,
-            nestedComponent: eventComponent,
-          },
-        ]
+        {
+          key: "event",
+          label: "Event",
+          value: null,
+          nestedComponent: eventComponent,
+        },
+      ]
       : []),
     ...(ticket?.venueId
       ? [
-          {
-            key: "venue",
-            label: "Venue",
-            value: null,
-            nestedComponent: venueComponent,
-          },
-        ]
+        {
+          key: "venue",
+          label: "Venue",
+          value: null,
+          nestedComponent: venueComponent,
+        },
+      ]
       : []),
   ];
 
@@ -274,6 +278,8 @@ export default function TicketDetailPage() {
                 useDeleteMutation={useDeleteTicketMutation}
                 onDeleteSuccess={() => navigate("/tickets")}
                 refetch={refetchTicket}
+                canEdit={canEditEntity(ticket, currentUser?.id ?? null, currentUser?.role ?? null)}
+                canDelete={canDeleteEntity(ticket, currentUser?.id ?? null, currentUser?.role ?? null)}
               />
             )}
           </div>

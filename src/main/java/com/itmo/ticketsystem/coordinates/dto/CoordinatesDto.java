@@ -13,4 +13,5 @@ import lombok.AllArgsConstructor;
 public class CoordinatesDto extends BaseEntityDto {
     private Integer x;
     private Float y;
+    private Long createdByUserId;
 }

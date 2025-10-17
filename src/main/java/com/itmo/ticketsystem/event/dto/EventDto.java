@@ -17,4 +17,5 @@ public class EventDto extends BaseEntityDto {
     private ZonedDateTime date;
     private Long minAge;
     private String description;
+    private Long createdByUserId;
 }

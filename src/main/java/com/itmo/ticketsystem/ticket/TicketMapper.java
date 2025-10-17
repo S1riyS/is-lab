@@ -26,8 +26,8 @@ public class TicketMapper {
         dto.setNumber(ticket.getNumber());
         dto.setComment(ticket.getComment());
         dto.setVenueId(ticket.getVenue() != null ? ticket.getVenue().getId() : null);
-        dto.setCreatedById(ticket.getCreatedBy() != null ? ticket.getCreatedBy().getId() : null);
-        dto.setUpdatedById(ticket.getUpdatedBy() != null ? ticket.getUpdatedBy().getId() : null);
+        dto.setCreatedByUserId(ticket.getCreatedBy() != null ? ticket.getCreatedBy().getId() : null);
+        dto.setUpdatedByUserId(ticket.getUpdatedBy() != null ? ticket.getUpdatedBy().getId() : null);
         dto.setUpdatedAt(ticket.getUpdatedAt());
         return dto;
     }

@@ -18,6 +18,7 @@ public class VenueMapper {
         dto.setName(venue.getName());
         dto.setCapacity(venue.getCapacity());
         dto.setType(venue.getType());
+        dto.setCreatedByUserId(venue.getCreatedBy() != null ? venue.getCreatedBy().getId() : null);
         return dto;
     }
 

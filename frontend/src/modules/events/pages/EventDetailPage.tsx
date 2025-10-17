@@ -1,9 +1,12 @@
 // src/modules/events/pages/EventDetailPage.tsx
 import { Alert, Button, Col, Container, Row, Spinner } from "react-bootstrap";
+import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 
 import DetailPageActions from "@common/components/DetailPageActions";
 import EntityDetail from "@common/components/EntityDetail";
+import { canEditEntity, canDeleteEntity } from "@common/utils/permissions";
+import { RootState } from "@store/index";
 
 import {
   useDeleteEventMutation,
@@ -17,6 +20,7 @@ export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const eventId = parseInt(id || "0", 10);
+  const currentUser = useSelector((state: RootState) => state.auth.user);
 
   const {
     data: event,
@@ -76,6 +80,8 @@ export default function EventDetailPage() {
                 useDeleteMutation={useDeleteEventMutation}
                 onDeleteSuccess={() => navigate("/events")}
                 refetch={refetchEvent}
+                canEdit={canEditEntity(event, currentUser?.id ?? null, currentUser?.role ?? null)}
+                canDelete={canDeleteEntity(event, currentUser?.id ?? null, currentUser?.role ?? null)}
               />
             )}
           </div>

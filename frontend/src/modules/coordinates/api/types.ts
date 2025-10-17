@@ -2,6 +2,7 @@ export type CoordinatesDto = {
   id: number;
   x?: number | null; // Integer with max 314
   y: number; // Float
+  createdByUserId?: number | null;
 };
 
 export type CoordinatesCreateDto = {

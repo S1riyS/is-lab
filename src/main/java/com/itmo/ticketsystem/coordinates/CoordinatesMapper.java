@@ -17,6 +17,7 @@ public class CoordinatesMapper {
         dto.setId(coordinates.getId());
         dto.setX(coordinates.getX());
         dto.setY(coordinates.getY());
+        dto.setCreatedByUserId(coordinates.getCreatedBy() != null ? coordinates.getCreatedBy().getId() : null);
         return dto;
     }
 

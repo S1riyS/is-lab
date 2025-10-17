@@ -20,6 +20,7 @@ export type PersonDto = {
   locationId: number;
   passportID: string;
   nationality: Country;
+  createdByUserId?: number | null;
 };
 
 export type PersonCreateDto = {
