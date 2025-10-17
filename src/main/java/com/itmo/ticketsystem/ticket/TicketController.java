@@ -110,6 +110,12 @@ public class TicketController {
         return ResponseEntity.ok(response);
     }
 
+    @DeleteMapping("/special/delete-by-venue")
+    public ResponseEntity<DeleteResponse> deleteTicketsByVenue(@RequestParam Long venueId) {
+        DeleteResponse response = ticketService.deleteTicketsByVenueId(venueId);
+        return ResponseEntity.ok(response);
+    }
+
     private User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated()) {

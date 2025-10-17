@@ -9,11 +9,13 @@ import { EntitySelect } from "@common/components/EntitySelect";
 import {
   useEventOptions,
   useTicketOptions,
+  useVenueOptions,
 } from "@common/hooks/useEntityOptions";
 
 import {
   useCancelEventMutation,
   useCreateTicketWithDiscountMutation,
+  useDeleteTicketsByVenueMutation,
   useGetTicketsByCommentGreaterThanQuery,
   useGroupTicketsByNameQuery,
 } from "../api/ticketsApi";
@@ -282,6 +284,72 @@ export function CancelEventButton() {
             disabled={!eventId || isLoading}
           >
             {isLoading ? "Cancelling..." : "Cancel Event"}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </>
+  );
+}
+
+export function DeleteTicketsByVenueModal() {
+  const [show, setShow] = useState(false);
+  const [venueId, setVenueId] = useState<number | string>("");
+  const [deleteByVenue, { isLoading }] = useDeleteTicketsByVenueMutation();
+  const { options: venueOptions, isLoading: venuesLoading } = useVenueOptions();
+
+  const handleDelete = async () => {
+    if (!venueId) return;
+
+    if (
+      !confirm(
+        `Are you sure you want to delete all tickets associated with venue ${venueId}? This action cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const response = await deleteByVenue({ venueId: Number(venueId) }).unwrap();
+      toast.success(response.message);
+      setShow(false);
+      setVenueId("");
+    } catch (error) {
+      showErrorToast(error);
+    }
+  };
+
+  return (
+    <>
+      <Button variant="danger" onClick={() => setShow(true)}>
+        Delete Tickets by Venue
+      </Button>
+
+      <Modal show={show} onHide={() => setShow(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Delete Tickets by Venue</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <EntitySelect
+            value={venueId}
+            onChange={setVenueId}
+            options={venueOptions}
+            placeholder="Select venue"
+            label="Venue"
+            required
+            helpText="Warning: This will delete all tickets associated with this venue!"
+            isLoading={venuesLoading}
+          />
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShow(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            onClick={handleDelete}
+            disabled={!venueId || isLoading}
+          >
+            {isLoading ? "Deleting..." : "Delete Tickets"}
           </Button>
         </Modal.Footer>
       </Modal>

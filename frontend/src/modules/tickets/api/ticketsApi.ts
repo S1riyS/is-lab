@@ -5,6 +5,7 @@ import type {
   CancelEventRequest,
   CreateTicketWithDiscountRequest,
   DeleteResponse,
+  DeleteTicketsByVenueRequest,
   TicketCreateDto,
   TicketDto,
   TicketGroupByNameResponse,
@@ -104,6 +105,22 @@ export const ticketsApi = baseApi.injectEndpoints({
         { type: "Tickets", id: "GROUP" },
       ],
     }),
+
+    deleteTicketsByVenue: build.mutation<
+      DeleteResponse,
+      DeleteTicketsByVenueRequest
+    >({
+      query: ({ venueId }) => ({
+        url: "/tickets/special/delete-by-venue",
+        method: "DELETE",
+        params: { venueId },
+      }),
+      invalidatesTags: [
+        { type: "Tickets", id: "LIST" },
+        { type: "Tickets", id: "GROUP" },
+        { type: "Tickets", id: "COMMENT" },
+      ],
+    }),
   }),
   overrideExisting: false,
 });
@@ -118,4 +135,5 @@ export const {
   useGetTicketsByCommentGreaterThanQuery,
   useCreateTicketWithDiscountMutation,
   useCancelEventMutation,
+  useDeleteTicketsByVenueMutation,
 } = ticketsApi;

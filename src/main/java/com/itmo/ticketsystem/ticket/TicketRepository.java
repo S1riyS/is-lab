@@ -23,7 +23,10 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
     @Query("SELECT t.name, COUNT(t) FROM Ticket t GROUP BY t.name")
     List<Object[]> groupByName();
-    
+
     @Query("SELECT t FROM Ticket t WHERE t.event.id = :eventId")
     List<Ticket> findByEventId(@Param("eventId") Long eventId);
+
+    @Query("SELECT t FROM Ticket t WHERE t.venue.id = :venueId")
+    List<Ticket> findByVenueId(@Param("venueId") Long venueId);
 }

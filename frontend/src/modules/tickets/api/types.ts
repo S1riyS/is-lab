@@ -52,6 +52,10 @@ export type CancelEventRequest = {
   eventId: number;
 };
 
+export type DeleteTicketsByVenueRequest = {
+  venueId: number;
+};
+
 export type DeleteResponse = {
   message: string;
 };

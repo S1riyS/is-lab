@@ -12,6 +12,7 @@ import { type TicketDto } from "../api/types";
 import {
   CancelEventButton,
   CreateTicketWithDiscountModal,
+  DeleteTicketsByVenueModal,
   GroupTicketsByNameModal,
   TicketsByCommentModal,
 } from "../components/TicketSpecialOperations";
@@ -66,6 +67,13 @@ const ticketsConfig: CrudConfig<TicketDto> = {
       type: "modal",
       variant: "warning",
       renderModal: () => <CancelEventButton />,
+    },
+    {
+      key: "delete-by-venue",
+      label: "Delete by Venue",
+      type: "modal",
+      variant: "danger",
+      renderModal: () => <DeleteTicketsByVenueModal />,
     },
   ],
 };

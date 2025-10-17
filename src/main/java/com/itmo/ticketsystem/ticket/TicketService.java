@@ -258,4 +258,27 @@ public class TicketService {
         List<Ticket> tickets = ticketRepository.findByEventId(eventId);
         ticketRepository.deleteAll(tickets);
     }
+
+    @Transactional
+    public DeleteResponse deleteTicketsByVenueId(Long venueId) {
+        // Verify venue exists
+        Venue venue = venueRepository
+                .findById(venueId)
+                .orElseThrow(() -> new NotFoundException("Venue not found with ID: " + venueId));
+
+        List<Ticket> tickets = ticketRepository.findByVenueId(venueId);
+        int count = tickets.size();
+
+        // Delete all tickets
+        ticketRepository.deleteAll(tickets);
+
+        // Publish change events for each deleted ticket
+        for (Ticket ticket : tickets) {
+            changeEventPublisher.publish("tickets", ChangeEvent.Operation.DELETE, ticket.getId());
+        }
+
+        return DeleteResponse.builder()
+                .message("Deleted " + count + " ticket(s) for venue: " + venue.getName())
+                .build();
+    }
 }
