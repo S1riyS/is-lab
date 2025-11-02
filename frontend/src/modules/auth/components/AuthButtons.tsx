@@ -73,7 +73,7 @@ export default function AuthButtons() {
           <FaUser /> {auth.user.username}{" "}
           {isAdmin && <Badge bg="danger">Admin</Badge>}
         </span>
-        {isUser && <RequestAdminRoleButton />}
+        {/* {isUser && <RequestAdminRoleButton />} */}
         <Button variant="outline-danger" size="sm" onClick={handleLogout}>
           Log out
         </Button>

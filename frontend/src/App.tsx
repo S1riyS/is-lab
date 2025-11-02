@@ -42,11 +42,11 @@ export default function App() {
               <Nav.Link as={Link} to="/coordinates">
                 Coordinates
               </Nav.Link>
-              {isAdmin && (
+              {/* {isAdmin && (
                 <Nav.Link as={Link} to="/admin-role-requests">
                   Admin Requests
                 </Nav.Link>
-              )}
+              )} */}
             </Nav>
             <Nav className="d-flex align-items-center">
               <div className="me-3">

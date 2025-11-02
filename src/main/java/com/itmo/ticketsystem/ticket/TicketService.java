@@ -6,11 +6,14 @@ import com.itmo.ticketsystem.ticket.dto.TicketUpdateDto;
 import com.itmo.ticketsystem.user.User;
 import com.itmo.ticketsystem.venue.Venue;
 import com.itmo.ticketsystem.venue.VenueRepository;
+
 import com.itmo.ticketsystem.common.dto.DeleteResponse;
 import com.itmo.ticketsystem.common.exceptions.NotFoundException;
 import com.itmo.ticketsystem.common.security.AuthorizationService;
 import com.itmo.ticketsystem.common.service.EntityResolutionService;
 import com.itmo.ticketsystem.common.ws.ChangeEventPublisher;
+import com.itmo.ticketsystem.event.Event;
+import com.itmo.ticketsystem.event.EventRepository;
 import com.itmo.ticketsystem.common.ws.ChangeEvent;
 
 import lombok.RequiredArgsConstructor;
@@ -29,6 +32,7 @@ public class TicketService {
 
     private final TicketRepository ticketRepository;
     private final VenueRepository venueRepository;
+    private final EventRepository eventRepository;
     private final TicketMapper ticketMapper;
     private final ChangeEventPublisher changeEventPublisher;
     private final AuthorizationService authorizationService;
@@ -156,13 +160,31 @@ public class TicketService {
         newTicket.setNumber(originalTicket.getNumber());
 
         Ticket savedTicket = ticketRepository.save(newTicket);
+        changeEventPublisher.publish("tickets", ChangeEvent.Operation.CREATE, savedTicket.getId());
         return ticketMapper.toDto(savedTicket);
     }
 
     @Transactional
-    public void cancelEvent(Long eventId) {
+    public DeleteResponse cancelEvent(Long eventId) {
+        // Verify venue exists
+        Event event = eventRepository
+                .findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event not found with ID: " + eventId));
+
         List<Ticket> tickets = ticketRepository.findByEventId(eventId);
+        int count = tickets.size();
+
         ticketRepository.deleteAll(tickets);
+
+        // Publish change events for each deleted ticket
+        for (Ticket ticket : tickets) {
+            changeEventPublisher.publish("tickets", ChangeEvent.Operation.DELETE, ticket.getId());
+        }
+
+        return DeleteResponse.builder()
+                .message("Deleted " + count + " ticket(s) for event: " + event.getName())
+                .build();
+            
     }
 
     @Transactional
