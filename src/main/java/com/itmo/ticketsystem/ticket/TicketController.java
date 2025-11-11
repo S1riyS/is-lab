@@ -18,10 +18,8 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/tickets")
-@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class TicketController extends BaseController {
-
     private final TicketService ticketService;
 
     @GetMapping
