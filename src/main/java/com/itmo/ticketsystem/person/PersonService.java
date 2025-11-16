@@ -6,7 +6,6 @@ import com.itmo.ticketsystem.person.dto.PersonUpdateDto;
 import com.itmo.ticketsystem.common.dto.DeleteResponse;
 import com.itmo.ticketsystem.common.exceptions.NotFoundException;
 import com.itmo.ticketsystem.common.security.AuthorizationService;
-import com.itmo.ticketsystem.common.service.EntityResolutionService;
 import com.itmo.ticketsystem.common.ws.ChangeEventPublisher;
 import com.itmo.ticketsystem.common.ws.ChangeEvent;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +23,6 @@ public class PersonService {
     private final PersonMapper personMapper;
     private final ChangeEventPublisher changeEventPublisher;
     private final AuthorizationService authorizationService;
-    private final EntityResolutionService entityResolutionService;
 
     public Page<PersonDto> getAllPersons(Pageable pageable) {
         return personRepository.findAll(pageable).map(personMapper::toDto);
@@ -41,7 +39,6 @@ public class PersonService {
         authorizationService.requireAuthenticated(currentUser);
 
         Person person = personMapper.toEntity(personCreateDto);
-        person.setLocation(entityResolutionService.resolveLocation(personCreateDto.getLocationId()));
         person.setCreatedBy(currentUser);
         Person savedPerson = personRepository.save(person);
         PersonDto dto = personMapper.toDto(savedPerson);
@@ -58,11 +55,6 @@ public class PersonService {
         authorizationService.requireCanModifyOrAdmin(currentUser, creatorId);
 
         personMapper.updateEntity(existingPerson, personUpdateDto);
-
-        if (personUpdateDto.getLocationId() != null) {
-            existingPerson.setLocation(entityResolutionService.resolveLocation(personUpdateDto.getLocationId()));
-        }
-
         Person savedPerson = personRepository.save(existingPerson);
         PersonDto dto = personMapper.toDto(savedPerson);
         changeEventPublisher.publish("persons", ChangeEvent.Operation.UPDATE, dto.getId());

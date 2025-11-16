@@ -30,10 +30,12 @@ import { FormRenderer } from "./FormRenderer";
 
 interface CrudPageProps<T extends { id: number }> {
   config: CrudConfig<T>;
+  hideTitle?: boolean;
 }
 
 export default function CrudPage<T extends { id: number } & EntityWithCreator>({
   config,
+  hideTitle = false,
 }: CrudPageProps<T>) {
   const navigate = useNavigate();
   const currentUser = useSelector((state: RootState) => state.auth.user);
@@ -137,7 +139,7 @@ export default function CrudPage<T extends { id: number } & EntityWithCreator>({
 
   return (
     <Stack gap={3}>
-      <h2>{config.entityName}s</h2>
+      {!hideTitle && <h2>{config.entityName}s</h2>}
 
       <Row className="mb-3 align-items-center">
         <Col>

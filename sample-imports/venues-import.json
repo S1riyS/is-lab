@@ -1,0 +1,20 @@
+{
+    "entityType": "VENUE",
+    "data": [
+        {
+            "name": "Grand Arena",
+            "capacity": 5000,
+            "type": "STADIUM"
+        },
+        {
+            "name": "High hills",
+            "capacity": 1500,
+            "type": "OPEN_AREA"
+        },
+        {
+            "name": "Small cinema",
+            "capacity": 300,
+            "type": "CINEMA"
+        }
+    ]
+}

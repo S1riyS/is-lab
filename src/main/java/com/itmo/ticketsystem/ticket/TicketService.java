@@ -10,7 +10,7 @@ import com.itmo.ticketsystem.venue.VenueRepository;
 import com.itmo.ticketsystem.common.dto.DeleteResponse;
 import com.itmo.ticketsystem.common.exceptions.NotFoundException;
 import com.itmo.ticketsystem.common.security.AuthorizationService;
-import com.itmo.ticketsystem.common.service.EntityResolutionService;
+import com.itmo.ticketsystem.common.TicketType;
 import com.itmo.ticketsystem.common.ws.ChangeEventPublisher;
 import com.itmo.ticketsystem.event.Event;
 import com.itmo.ticketsystem.event.EventRepository;
@@ -36,7 +36,7 @@ public class TicketService {
     private final TicketMapper ticketMapper;
     private final ChangeEventPublisher changeEventPublisher;
     private final AuthorizationService authorizationService;
-    private final EntityResolutionService entityResolutionService;
+    private final TicketValidator ticketValidator;
 
     public Page<TicketDto> getAllTickets(Pageable pageable) {
         return ticketRepository.findAll(pageable).map(ticketMapper::toDto);
@@ -60,14 +60,13 @@ public class TicketService {
     public TicketDto createTicket(TicketCreateDto ticketCreateDto, User currentUser) {
         authorizationService.requireAuthenticated(currentUser);
 
+        // Business-layer constraints
+        ticketValidator.validateDiscountForType(ticketCreateDto.getType(), ticketCreateDto.getDiscount());
+        ticketValidator.validateEventCapacity(ticketCreateDto.getEventId(), ticketCreateDto.getVenueId());
+
         Ticket ticket = ticketMapper.toEntity(ticketCreateDto);
         ticket.setCreatedBy(currentUser);
         ticket.setUpdatedBy(currentUser);
-
-        ticket.setCoordinates(entityResolutionService.resolveCoordinates(ticketCreateDto.getCoordinatesId()));
-        ticket.setPerson(entityResolutionService.resolvePerson(ticketCreateDto.getPersonId()));
-        ticket.setEvent(entityResolutionService.resolveEventOptional(ticketCreateDto.getEventId()));
-        ticket.setVenue(entityResolutionService.resolveVenueOptional(ticketCreateDto.getVenueId()));
 
         Ticket savedTicket = ticketRepository.save(ticket);
         TicketDto dto = ticketMapper.toDto(savedTicket);
@@ -83,22 +82,14 @@ public class TicketService {
 
         authorizationService.requireCanModify(currentUser, existingTicket.getCreatedBy().getId());
 
+        // Business-layer constraints
+        ticketValidator.validateDiscountForType(ticketUpdateDto.getType(), ticketUpdateDto.getDiscount());
+        ticketValidator.validateEventCapacityForUpdate(
+                ticketUpdateDto.getEventId(),
+                ticketUpdateDto.getVenueId(),
+                existingTicket.getId());
+
         ticketMapper.updateEntity(existingTicket, ticketUpdateDto);
-
-        if (ticketUpdateDto.getCoordinatesId() != null) {
-            existingTicket
-                    .setCoordinates(entityResolutionService.resolveCoordinates(ticketUpdateDto.getCoordinatesId()));
-        }
-        if (ticketUpdateDto.getPersonId() != null) {
-            existingTicket.setPerson(entityResolutionService.resolvePerson(ticketUpdateDto.getPersonId()));
-        }
-        if (ticketUpdateDto.getEventId() != null) {
-            existingTicket.setEvent(entityResolutionService.resolveEventOptional(ticketUpdateDto.getEventId()));
-        }
-        if (ticketUpdateDto.getVenueId() != null) {
-            existingTicket.setVenue(entityResolutionService.resolveVenueOptional(ticketUpdateDto.getVenueId()));
-        }
-
         existingTicket.setUpdatedBy(currentUser);
 
         Ticket savedTicket = ticketRepository.save(existingTicket);
@@ -142,26 +133,26 @@ public class TicketService {
 
     @Transactional
     public TicketDto createTicketWithDiscount(Ticket originalTicket, Double discountPercent, User currentUser) {
-        Ticket newTicket = new Ticket();
-        newTicket.setName(originalTicket.getName());
-        newTicket.setCoordinates(originalTicket.getCoordinates());
-        newTicket.setPerson(originalTicket.getPerson());
-        newTicket.setEvent(originalTicket.getEvent());
-        newTicket.setType(originalTicket.getType());
-        newTicket.setComment(originalTicket.getComment());
-        newTicket.setVenue(originalTicket.getVenue());
-        newTicket.setCreatedBy(currentUser);
-        newTicket.setUpdatedBy(currentUser);
+        // Build TicketCreateDto from original ticket
+        TicketCreateDto ticketCreateDto = new TicketCreateDto();
+        ticketCreateDto.setName(originalTicket.getName());
+        ticketCreateDto.setCoordinatesId(
+                originalTicket.getCoordinates() != null ? originalTicket.getCoordinates().getId() : null);
+        ticketCreateDto.setCreationDate(originalTicket.getCreationDate());
+        ticketCreateDto.setPersonId(originalTicket.getPerson() != null ? originalTicket.getPerson().getId() : null);
+        ticketCreateDto.setEventId(originalTicket.getEvent() != null ? originalTicket.getEvent().getId() : null);
+        ticketCreateDto.setType(originalTicket.getType());
+        ticketCreateDto.setComment(originalTicket.getComment());
+        ticketCreateDto.setVenueId(originalTicket.getVenue() != null ? originalTicket.getVenue().getId() : null);
+        ticketCreateDto.setNumber(originalTicket.getNumber());
 
         // Apply discount and increase price
         Double discountAmount = originalTicket.getPrice() * (discountPercent / 100.0);
-        newTicket.setPrice(originalTicket.getPrice() + discountAmount.floatValue());
-        newTicket.setDiscount(discountPercent);
-        newTicket.setNumber(originalTicket.getNumber());
+        Float newPrice = originalTicket.getPrice() + discountAmount.floatValue();
+        ticketCreateDto.setPrice(newPrice);
+        ticketCreateDto.setDiscount(discountPercent);
 
-        Ticket savedTicket = ticketRepository.save(newTicket);
-        changeEventPublisher.publish("tickets", ChangeEvent.Operation.CREATE, savedTicket.getId());
-        return ticketMapper.toDto(savedTicket);
+        return createTicket(ticketCreateDto, currentUser);
     }
 
     @Transactional
@@ -184,7 +175,7 @@ public class TicketService {
         return DeleteResponse.builder()
                 .message("Deleted " + count + " ticket(s) for event: " + event.getName())
                 .build();
-            
+
     }
 
     @Transactional

@@ -1,6 +1,8 @@
 // src/modules/coordinates/CoordinatesPage.tsx
-import CrudPage from "@common/components/CrudPage";
+import TabbedCrudPage from "@common/components/TabbedCrudPage";
 import type { CrudConfig } from "@common/types/crudConfig";
+import { EntityType } from "@common/api/importTypes";
+import { useGetCoordinatesImportHistoryQuery } from "@common/api/importApi";
 
 import {
   useCreateCoordinatesMutation,
@@ -26,5 +28,11 @@ const coordinatesConfig: CrudConfig<CoordinatesDto> = {
 };
 
 export default function CoordinatesPage() {
-  return <CrudPage<CoordinatesDto> config={coordinatesConfig} />;
+  return (
+    <TabbedCrudPage<CoordinatesDto>
+      config={coordinatesConfig}
+      entityType={EntityType.COORDINATES}
+      useImportHistoryQuery={useGetCoordinatesImportHistoryQuery}
+    />
+  );
 }

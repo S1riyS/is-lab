@@ -1,12 +1,18 @@
 package com.itmo.ticketsystem.person;
 
+import com.itmo.ticketsystem.common.service.EntityResolutionService;
 import com.itmo.ticketsystem.person.dto.PersonCreateDto;
 import com.itmo.ticketsystem.person.dto.PersonDto;
+import com.itmo.ticketsystem.person.dto.PersonImportDto;
 import com.itmo.ticketsystem.person.dto.PersonUpdateDto;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class PersonMapper {
+
+    private final EntityResolutionService entityResolutionService;
 
     public PersonDto toDto(Person person) {
         if (person == null) {
@@ -34,6 +40,23 @@ public class PersonMapper {
         person.setHairColor(createDto.getHairColor());
         person.setPassportID(createDto.getPassportID());
         person.setNationality(createDto.getNationality());
+
+        // Resolve relationships
+        person.setLocation(entityResolutionService.resolveLocation(createDto.getLocationId()));
+
+        return person;
+    }
+
+    public Person toEntity(PersonImportDto importDto) {
+        if (importDto == null) {
+            return null;
+        }
+
+        Person person = new Person();
+        person.setEyeColor(importDto.getEyeColor());
+        person.setHairColor(importDto.getHairColor());
+        person.setPassportID(importDto.getPassportID());
+        person.setNationality(importDto.getNationality());
         return person;
     }
 
@@ -53,6 +76,11 @@ public class PersonMapper {
         }
         if (updateDto.getNationality() != null) {
             existingEntity.setNationality(updateDto.getNationality());
+        }
+
+        // Update relationships
+        if (updateDto.getLocationId() != null) {
+            existingEntity.setLocation(entityResolutionService.resolveLocation(updateDto.getLocationId()));
         }
     }
 }

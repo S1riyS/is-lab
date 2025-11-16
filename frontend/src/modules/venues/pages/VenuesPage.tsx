@@ -1,6 +1,8 @@
 // src/modules/venues/VenuesPage.tsx
-import CrudPage from "@common/components/CrudPage";
+import TabbedCrudPage from "@common/components/TabbedCrudPage";
 import type { CrudConfig } from "@common/types/crudConfig";
+import { EntityType } from "@common/api/importTypes";
+import { useGetVenueImportHistoryQuery } from "@common/api/importApi";
 
 import type { VenueDto } from "../api/types";
 import {
@@ -27,5 +29,11 @@ const venuesConfig: CrudConfig<VenueDto> = {
 };
 
 export default function VenuesPage() {
-  return <CrudPage<VenueDto> config={venuesConfig} />;
+  return (
+    <TabbedCrudPage<VenueDto>
+      config={venuesConfig}
+      entityType={EntityType.VENUE}
+      useImportHistoryQuery={useGetVenueImportHistoryQuery}
+    />
+  );
 }

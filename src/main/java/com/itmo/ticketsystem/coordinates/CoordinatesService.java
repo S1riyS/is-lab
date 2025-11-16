@@ -23,6 +23,7 @@ public class CoordinatesService {
     private final CoordinatesMapper coordinatesMapper;
     private final ChangeEventPublisher changeEventPublisher;
     private final AuthorizationService authorizationService;
+    private final CoordinatesValidator coordinatesValidator;
 
     public Page<CoordinatesDto> getAllCoordinates(Pageable pageable) {
         return coordinatesRepository.findAll(pageable).map(coordinatesMapper::toDto);
@@ -40,23 +41,33 @@ public class CoordinatesService {
 
         Coordinates coordinates = coordinatesMapper.toEntity(coordinatesCreateDto);
         coordinates.setCreatedBy(currentUser);
+
+        // Business-layer constraints
+        coordinatesValidator.validateAreaBelonging(coordinates);
+
         Coordinates savedCoordinates = coordinatesRepository.save(coordinates);
         CoordinatesDto dto = coordinatesMapper.toDto(savedCoordinates);
+
         changeEventPublisher.publish("coordinates", ChangeEvent.Operation.CREATE, dto.getId());
         return dto;
     }
 
     @Transactional
     public CoordinatesDto updateCoordinates(Long id, CoordinatesUpdateDto coordinatesUpdateDto, User currentUser) {
-        Coordinates existingCoordinates = coordinatesRepository.findById(id)
+        Coordinates coordinates = coordinatesRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Coordinates not found with ID: " + id));
 
-        Long creatorId = existingCoordinates.getCreatedBy() != null ? existingCoordinates.getCreatedBy().getId() : null;
+        Long creatorId = coordinates.getCreatedBy().getId();
         authorizationService.requireCanModifyOrAdmin(currentUser, creatorId);
 
-        coordinatesMapper.updateEntity(existingCoordinates, coordinatesUpdateDto);
-        Coordinates savedCoordinates = coordinatesRepository.save(existingCoordinates);
+        coordinatesMapper.updateEntity(coordinates, coordinatesUpdateDto);
+
+        // Business-layer constraints
+        coordinatesValidator.validateAreaBelonging(coordinates);
+
+        Coordinates savedCoordinates = coordinatesRepository.save(coordinates);
         CoordinatesDto dto = coordinatesMapper.toDto(savedCoordinates);
+
         changeEventPublisher.publish("coordinates", ChangeEvent.Operation.UPDATE, dto.getId());
         return dto;
     }

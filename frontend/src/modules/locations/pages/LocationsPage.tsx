@@ -1,6 +1,8 @@
 // src/modules/locations/LocationsPage.tsx
-import CrudPage from "@common/components/CrudPage";
+import TabbedCrudPage from "@common/components/TabbedCrudPage";
 import type { CrudConfig } from "@common/types/crudConfig";
+import { EntityType } from "@common/api/importTypes";
+import { useGetLocationImportHistoryQuery } from "@common/api/importApi";
 
 import {
   useCreateLocationMutation,
@@ -28,5 +30,11 @@ const locationsConfig: CrudConfig<LocationDto> = {
 };
 
 export default function LocationsPage() {
-  return <CrudPage<LocationDto> config={locationsConfig} />;
+  return (
+    <TabbedCrudPage<LocationDto>
+      config={locationsConfig}
+      entityType={EntityType.LOCATION}
+      useImportHistoryQuery={useGetLocationImportHistoryQuery}
+    />
+  );
 }

@@ -7,6 +7,7 @@ import { Link, Route, Routes } from "react-router-dom";
 
 import AuthButtons from "@auth/components/AuthButtons";
 import DarkModeToggle from "@components/DarkModeToggle";
+import GlobalImportButton from "@common/components/GlobalImportButton";
 import routes from "@routes";
 import { RootState } from "@store";
 
@@ -49,9 +50,12 @@ export default function App() {
               )} */}
             </Nav>
             <Nav className="d-flex align-items-center">
-              <div className="me-3">
-                <DarkModeToggle />
+              <div className="me-2">
+                <GlobalImportButton />
               </div>
+              {/* <div className="me-3">
+                <DarkModeToggle />
+              </div> */}
               <AuthButtons />
             </Nav>
           </Navbar.Collapse>

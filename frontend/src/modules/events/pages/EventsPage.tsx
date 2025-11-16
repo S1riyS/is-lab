@@ -1,6 +1,8 @@
 // src/modules/events/EventsPage.tsx
-import CrudPage from "@common/components/CrudPage";
+import TabbedCrudPage from "@common/components/TabbedCrudPage";
 import type { CrudConfig } from "@common/types/crudConfig";
+import { EntityType } from "@common/api/importTypes";
+import { useGetEventImportHistoryQuery } from "@common/api/importApi";
 import { renderDateTime } from "@common/utils/dateUtils";
 
 import {
@@ -34,5 +36,11 @@ const eventsConfig: CrudConfig<EventDto> = {
 };
 
 export default function EventsPage() {
-  return <CrudPage<EventDto> config={eventsConfig} />;
+  return (
+    <TabbedCrudPage<EventDto>
+      config={eventsConfig}
+      entityType={EntityType.EVENT}
+      useImportHistoryQuery={useGetEventImportHistoryQuery}
+    />
+  );
 }

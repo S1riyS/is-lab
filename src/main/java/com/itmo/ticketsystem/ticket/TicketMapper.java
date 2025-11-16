@@ -1,12 +1,18 @@
 package com.itmo.ticketsystem.ticket;
 
+import com.itmo.ticketsystem.common.service.EntityResolutionService;
 import com.itmo.ticketsystem.ticket.dto.TicketCreateDto;
 import com.itmo.ticketsystem.ticket.dto.TicketDto;
+import com.itmo.ticketsystem.ticket.dto.TicketImportDto;
 import com.itmo.ticketsystem.ticket.dto.TicketUpdateDto;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class TicketMapper {
+
+    private final EntityResolutionService entityResolutionService;
 
     public TicketDto toDto(Ticket ticket) {
         if (ticket == null) {
@@ -46,6 +52,30 @@ public class TicketMapper {
         ticket.setDiscount(createDto.getDiscount());
         ticket.setNumber(createDto.getNumber());
         ticket.setComment(createDto.getComment());
+
+        // Resolve relationships
+        ticket.setCoordinates(entityResolutionService.resolveCoordinates(createDto.getCoordinatesId()));
+        ticket.setPerson(entityResolutionService.resolvePerson(createDto.getPersonId()));
+        ticket.setEvent(entityResolutionService.resolveEventOptional(createDto.getEventId()));
+        ticket.setVenue(entityResolutionService.resolveVenueOptional(createDto.getVenueId()));
+
+        return ticket;
+    }
+
+    public Ticket toEntity(TicketImportDto importDto) {
+        if (importDto == null) {
+            return null;
+        }
+
+        Ticket ticket = new Ticket();
+        ticket.setName(importDto.getName());
+        ticket.setCreationDate(
+                importDto.getCreationDate() != null ? importDto.getCreationDate() : new java.util.Date());
+        ticket.setPrice(importDto.getPrice());
+        ticket.setType(importDto.getType());
+        ticket.setDiscount(importDto.getDiscount());
+        ticket.setNumber(importDto.getNumber());
+        ticket.setComment(importDto.getComment());
         return ticket;
     }
 
@@ -74,6 +104,20 @@ public class TicketMapper {
         }
         if (updateDto.getCreationDate() != null) {
             existingEntity.setCreationDate(updateDto.getCreationDate());
+        }
+
+        // Update relationships
+        if (updateDto.getCoordinatesId() != null) {
+            existingEntity.setCoordinates(entityResolutionService.resolveCoordinates(updateDto.getCoordinatesId()));
+        }
+        if (updateDto.getPersonId() != null) {
+            existingEntity.setPerson(entityResolutionService.resolvePerson(updateDto.getPersonId()));
+        }
+        if (updateDto.getEventId() != null) {
+            existingEntity.setEvent(entityResolutionService.resolveEventOptional(updateDto.getEventId()));
+        }
+        if (updateDto.getVenueId() != null) {
+            existingEntity.setVenue(entityResolutionService.resolveVenueOptional(updateDto.getVenueId()));
         }
     }
 }

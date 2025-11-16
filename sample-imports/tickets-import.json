@@ -1,0 +1,64 @@
+{
+    "entityType": "TICKET",
+    "data": [
+        {
+            "name": "VIP Ticket",
+            "coordinates": {
+                "x": 100,
+                "y": 50.5
+            },
+            "person": {
+                "eyeColor": "YELLOW",
+                "hairColor": "BROWN",
+                "location": {
+                    "x": 1000,
+                    "y": 2000.5,
+                    "z": 3000,
+                    "name": "Seoul"
+                },
+                "passportID": "1111111111",
+                "nationality": "SOUTH_KOREA"
+            },
+            "event": {
+                "name": "Rock Concert",
+                "date": "2025-12-15T19:00:00+03:00",
+                "minAge": 18,
+                "description": "An amazing rock concert"
+            },
+            "price": 5000.0,
+            "type": "VIP",
+            "discount": 10.0,
+            "number": 1.0,
+            "comment": "Front row seat",
+            "venue": {
+                "name": "Grand Arena",
+                "capacity": 5000,
+                "type": "STADIUM"
+            }
+        },
+        {
+            "name": "Regular Ticket",
+            "coordinates": {
+                "x": 200,
+                "y": 75.3
+            },
+            "person": {
+                "eyeColor": "ORANGE",
+                "hairColor": "YELLOW",
+                "location": {
+                    "x": 2000,
+                    "y": 3000.7,
+                    "z": 4000,
+                    "name": "Las Vegas"
+                },
+                "passportID": "2222222222",
+                "nationality": "USA"
+            },
+            "price": 2000.0,
+            "type": "USUAL",
+            "discount": 5.0,
+            "number": 2.0,
+            "comment": "Standard seat in the middle section"
+        }
+    ]
+}

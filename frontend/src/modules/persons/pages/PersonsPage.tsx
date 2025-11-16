@@ -1,6 +1,8 @@
 // src/modules/persons/PersonsPage.tsx
-import CrudPage from "@common/components/CrudPage";
+import TabbedCrudPage from "@common/components/TabbedCrudPage";
 import type { CrudConfig } from "@common/types/crudConfig";
+import { EntityType } from "@common/api/importTypes";
+import { useGetPersonImportHistoryQuery } from "@common/api/importApi";
 
 import {
   useCreatePersonMutation,
@@ -29,5 +31,11 @@ const personsConfig: CrudConfig<PersonDto> = {
 };
 
 export default function PersonsPage() {
-  return <CrudPage<PersonDto> config={personsConfig} />;
+  return (
+    <TabbedCrudPage<PersonDto>
+      config={personsConfig}
+      entityType={EntityType.PERSON}
+      useImportHistoryQuery={useGetPersonImportHistoryQuery}
+    />
+  );
 }

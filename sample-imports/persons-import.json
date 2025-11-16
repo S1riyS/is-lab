@@ -1,0 +1,41 @@
+{
+    "entityType": "PERSON",
+    "data": [
+        {
+            "eyeColor": "BLUE",
+            "hairColor": "BROWN",
+            "location": {
+                "x": 1000,
+                "y": 2000.5,
+                "z": 3000,
+                "name": "Moscow"
+            },
+            "passportID": "1234567890",
+            "nationality": "RUSSIA"
+        },
+        {
+            "eyeColor": "GREEN",
+            "hairColor": "BLACK",
+            "location": {
+                "x": 2000,
+                "y": 3000.7,
+                "z": 4000,
+                "name": "Berlin"
+            },
+            "passportID": "9876543210",
+            "nationality": "GERMANY"
+        },
+        {
+            "eyeColor": null,
+            "hairColor": null,
+            "location": {
+                "x": null,
+                "y": 1500.3,
+                "z": 2500,
+                "name": "Paris"
+            },
+            "passportID": "5555555555",
+            "nationality": "FRANCE"
+        }
+    ]
+}

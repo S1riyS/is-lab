@@ -1,0 +1,23 @@
+{
+    "entityType": "EVENT",
+    "data": [
+        {
+            "name": "Rock Concert",
+            "date": "2025-12-15T19:00:00+03:00",
+            "minAge": 18,
+            "description": "An amazing rock concert with famous bands"
+        },
+        {
+            "name": "Classical Music Evening",
+            "date": "2025-11-20T18:00:00+03:00",
+            "minAge": 12,
+            "description": "Evening of classical music performed by symphony orchestra"
+        },
+        {
+            "name": "Jazz Festival",
+            "date": null,
+            "minAge": 16,
+            "description": "Annual jazz festival with international artists"
+        }
+    ]
+}

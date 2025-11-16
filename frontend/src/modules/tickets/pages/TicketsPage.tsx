@@ -1,6 +1,8 @@
 // src/modules/tickets/TicketsPage.tsx
-import CrudPageWithSpecialOperations from "@common/components/CrudPageWithSpecialOperations";
+import TabbedCrudPage from "@common/components/TabbedCrudPage";
 import type { CrudConfig } from "@common/types/crudConfig";
+import { EntityType } from "@common/api/importTypes";
+import { useGetTicketImportHistoryQuery } from "@common/api/importApi";
 
 import {
   useCreateTicketMutation,
@@ -38,7 +40,7 @@ const ticketsConfig: CrudConfig<TicketDto> = {
     { key: "venueId", header: "Venue ID", sortable: true },
   ],
   formFields: ticketFormFields,
-  // Add special operations only for tickets
+  // Special operations (without import buttons)
   specialOperations: [
     {
       key: "group-by-name",
@@ -79,5 +81,11 @@ const ticketsConfig: CrudConfig<TicketDto> = {
 };
 
 export default function TicketsPage() {
-  return <CrudPageWithSpecialOperations<TicketDto> config={ticketsConfig} />;
+  return (
+    <TabbedCrudPage<TicketDto>
+      config={ticketsConfig}
+      entityType={EntityType.TICKET}
+      useImportHistoryQuery={useGetTicketImportHistoryQuery}
+    />
+  );
 }

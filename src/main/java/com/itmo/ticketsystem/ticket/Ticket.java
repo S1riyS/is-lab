@@ -26,6 +26,10 @@ public class Ticket {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    @Column(name = "version")
+    private Long version;
+
     @Column(name = "name")
     @NotBlank(message = "Name cannot be blank")
     @NotNull(message = "Name cannot be null")

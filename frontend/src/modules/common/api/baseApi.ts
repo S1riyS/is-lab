@@ -19,11 +19,19 @@ export const baseApi = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({
     baseUrl: API_BASE_URL,
-    prepareHeaders: (headers) => {
+    prepareHeaders: (headers, { endpoint }) => {
       console.log('API Base URL:', import.meta.env.VITE_API_BASE_URL);
       const token = getToken();
       if (token) headers.set("Authorization", `Bearer ${token}`);
-      headers.set("Content-Type", "application/json");
+
+      // Don't set Content-Type for import endpoints (they use FormData)
+      // The browser will automatically set it with the correct boundary
+      const isImportEndpoint = endpoint?.startsWith('import') || false;
+
+      if (!isImportEndpoint) {
+        headers.set("Content-Type", "application/json");
+      }
+
       return headers;
     },
   }),
@@ -36,6 +44,7 @@ export const baseApi = createApi({
     "Venues",
     "Users",
     "AdminRoleRequests",
+    "ImportHistory",
   ],
   endpoints: () => ({}),
   refetchOnFocus: true,

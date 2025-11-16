@@ -1,0 +1,23 @@
+{
+    "entityType": "LOCATION",
+    "data": [
+        {
+            "x": 1000,
+            "y": 2000.5,
+            "z": 3000,
+            "name": "Moscow"
+        },
+        {
+            "x": 2000,
+            "y": 3000.7,
+            "z": 4000,
+            "name": "Saint Petersburg"
+        },
+        {
+            "x": null,
+            "y": 1500.3,
+            "z": 2500,
+            "name": "Kazan"
+        }
+    ]
+}
