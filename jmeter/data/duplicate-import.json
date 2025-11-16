@@ -1,0 +1,75 @@
+{
+    "entityType": "TICKET",
+    "data": [
+        {
+            "name": "Duplicate Test Ticket 1",
+            "coordinates": {
+                "x": 5,
+                "y": -3
+            },
+            "person": {
+                "eyeColor": "YELLOW",
+                "hairColor": "BROWN",
+                "location": {
+                    "x": 1000,
+                    "y": 2000.5,
+                    "z": 3000,
+                    "name": "Test City"
+                },
+                "passportID": "DUPLICATE_PASSPORT_001",
+                "nationality": "USA"
+            },
+            "event": {
+                "name": "Test Event",
+                "date": "2025-12-15T19:00:00+03:00",
+                "minAge": 18,
+                "description": "Test event for duplicate import"
+            },
+            "price": 1000.0,
+            "type": "USUAL",
+            "discount": 5.0,
+            "number": 1.0,
+            "comment": "First ticket with duplicate passport",
+            "venue": {
+                "name": "Test Venue",
+                "capacity": 100,
+                "type": "STADIUM"
+            }
+        },
+        {
+            "name": "Duplicate Test Ticket 2",
+            "coordinates": {
+                "x": 0,
+                "y": 7
+            },
+            "person": {
+                "eyeColor": "ORANGE",
+                "hairColor": "YELLOW",
+                "location": {
+                    "x": 2000,
+                    "y": 3000.7,
+                    "z": 4000,
+                    "name": "Another City"
+                },
+                "passportID": "DUPLICATE_PASSPORT_001",
+                "nationality": "USA"
+            },
+            "event": {
+                "name": "Test Event",
+                "date": "2025-12-15T19:00:00+03:00",
+                "minAge": 18,
+                "description": "Test event for duplicate import"
+            },
+            "price": 2000.0,
+            "type": "VIP",
+            "discount": 10.0,
+            "number": 2.0,
+            "comment": "Second ticket with duplicate passport - should fail",
+            "venue": {
+                "name": "Test Venue",
+                "capacity": 100,
+                "type": "STADIUM"
+            }
+        }
+    ]
+}
