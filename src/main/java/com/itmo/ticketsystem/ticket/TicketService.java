@@ -18,7 +18,10 @@ import com.itmo.ticketsystem.common.ws.ChangeEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -35,7 +38,6 @@ public class TicketService {
     private final TicketMapper ticketMapper;
     private final ChangeEventPublisher changeEventPublisher;
     private final AuthorizationService authorizationService;
-    private final TicketValidator ticketValidator;
 
     public Page<TicketDto> getAllTickets(Pageable pageable) {
         return ticketRepository.findAll(pageable).map(ticketMapper::toDto);
@@ -60,7 +62,8 @@ public class TicketService {
         authorizationService.requireAuthenticated(currentUser);
 
         // Business-layer constraints
-        // ticketValidator.validateDiscountForType(ticketCreateDto.getType(), ticketCreateDto.getDiscount());
+        // ticketValidator.validateDiscountForType(ticketCreateDto.getType(),
+        // ticketCreateDto.getDiscount());
 
         Ticket ticket = ticketMapper.toEntity(ticketCreateDto);
         ticket.setCreatedBy(currentUser);
@@ -72,7 +75,8 @@ public class TicketService {
         return dto;
     }
 
-    @Transactional
+    @Retryable(maxAttempts = 3)
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
     public TicketDto updateTicket(Long id, TicketUpdateDto ticketUpdateDto, User currentUser) {
         Ticket existingTicket = ticketRepository
                 .findById(id)
@@ -81,7 +85,8 @@ public class TicketService {
         authorizationService.requireCanModify(currentUser, existingTicket.getCreatedBy().getId());
 
         // Business-layer constraints
-        // ticketValidator.validateDiscountForType(ticketUpdateDto.getType(), ticketUpdateDto.getDiscount());
+        // ticketValidator.validateDiscountForType(ticketUpdateDto.getType(),
+        // ticketUpdateDto.getDiscount());
 
         ticketMapper.updateEntity(existingTicket, ticketUpdateDto);
         existingTicket.setUpdatedBy(currentUser);

@@ -6,6 +6,7 @@ import com.itmo.ticketsystem.venue.dto.VenueUpdateDto;
 import com.itmo.ticketsystem.common.dto.DeleteResponse;
 import com.itmo.ticketsystem.common.exceptions.NotFoundException;
 import com.itmo.ticketsystem.common.security.AuthorizationService;
+import com.itmo.ticketsystem.common.service.ApplicationLayerSyncedService;
 import com.itmo.ticketsystem.common.ws.ChangeEventPublisher;
 import com.itmo.ticketsystem.common.ws.ChangeEvent;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +18,7 @@ import com.itmo.ticketsystem.user.User;
 
 @Service
 @RequiredArgsConstructor
-public class VenueService {
+public class VenueService extends ApplicationLayerSyncedService {
 
     private final VenueRepository venueRepository;
     private final VenueMapper venueMapper;
@@ -36,24 +37,27 @@ public class VenueService {
                 .orElseThrow(() -> new NotFoundException("Venue not found with ID: " + id));
     }
 
-    @Transactional
     public VenueDto createVenue(VenueCreateDto venueCreateDto, User currentUser) {
         authorizationService.requireAuthenticated(currentUser);
 
         Venue venue = venueMapper.toEntity(venueCreateDto);
         venue.setCreatedBy(currentUser);
 
-        // Business layer uniqueness constraint
-        venueValidator.checkNameUniqueness(venue.getName());
+        String normalizedName = venue.getName().trim();
 
-        Venue savedVenue = venueRepository.save(venue);
+        // Execute with lock - ensures transaction commits before lock is released
+        return executeWithLock(normalizedName, () -> {
+            // Business layer uniqueness constraint
+            venueValidator.checkNameUniqueness(venue.getName());
 
-        VenueDto dto = venueMapper.toDto(savedVenue);
-        changeEventPublisher.publish("venues", ChangeEvent.Operation.CREATE, dto.getId());
-        return dto;
+            Venue savedVenue = venueRepository.save(venue);
+
+            VenueDto dto = venueMapper.toDto(savedVenue);
+            changeEventPublisher.publish("venues", ChangeEvent.Operation.CREATE, dto.getId());
+            return dto;
+        });
     }
 
-    @Transactional
     public VenueDto updateVenue(Long id, VenueUpdateDto venueUpdateDto, User currentUser) {
         Venue existingVenue = venueRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Venue not found with ID: " + id));
@@ -62,14 +66,19 @@ public class VenueService {
         authorizationService.requireCanModifyOrAdmin(currentUser, creatorId);
 
         venueMapper.updateEntity(existingVenue, venueUpdateDto);
-        
-        // Business layer uniqueness constraint
-        venueValidator.checkNameUniqueness(existingVenue.getName());
 
-        Venue savedVenue = venueRepository.save(existingVenue);
-        VenueDto dto = venueMapper.toDto(savedVenue);
-        changeEventPublisher.publish("venues", ChangeEvent.Operation.UPDATE, dto.getId());
-        return dto;
+        String normalizedName = existingVenue.getName().trim();
+
+        // Execute with lock - ensures transaction commits before lock is released
+        return executeWithLock(normalizedName, () -> {
+            // Business layer uniqueness constraint
+            venueValidator.checkNameUniqueness(existingVenue.getName());
+
+            Venue savedVenue = venueRepository.save(existingVenue);
+            VenueDto dto = venueMapper.toDto(savedVenue);
+            changeEventPublisher.publish("venues", ChangeEvent.Operation.UPDATE, dto.getId());
+            return dto;
+        });
     }
 
     @Transactional
