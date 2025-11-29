@@ -21,6 +21,8 @@ public class LocationService {
 
     private final LocationRepository locationRepository;
     private final LocationMapper locationMapper;
+    private final LocationValidator locationValidator;
+
     private final ChangeEventPublisher changeEventPublisher;
     private final AuthorizationService authorizationService;
 
@@ -40,7 +42,12 @@ public class LocationService {
 
         Location location = locationMapper.toEntity(locationCreateDto);
         location.setCreatedBy(currentUser);
+        
+        // Business layer uniqueness constraint
+        locationValidator.checkNameUniqueness(location.getName());
+
         Location savedLocation = locationRepository.save(location);
+
         LocationDto dto = locationMapper.toDto(savedLocation);
         changeEventPublisher.publish("locations", ChangeEvent.Operation.CREATE, dto.getId());
         return dto;
@@ -55,6 +62,10 @@ public class LocationService {
         authorizationService.requireCanModifyOrAdmin(currentUser, creatorId);
 
         locationMapper.updateEntity(existingLocation, locationUpdateDto);
+
+        // Business layer uniqueness constraint
+        locationValidator.checkNameUniqueness(existingLocation.getName());
+
         Location savedLocation = locationRepository.save(existingLocation);
         LocationDto dto = locationMapper.toDto(savedLocation);
         changeEventPublisher.publish("locations", ChangeEvent.Operation.UPDATE, dto.getId());

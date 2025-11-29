@@ -43,7 +43,7 @@ public class CoordinatesService {
         coordinates.setCreatedBy(currentUser);
 
         // Business-layer constraints
-        coordinatesValidator.validateAreaBelonging(coordinates);
+        // coordinatesValidator.validateAreaBelonging(coordinates);
 
         Coordinates savedCoordinates = coordinatesRepository.save(coordinates);
         CoordinatesDto dto = coordinatesMapper.toDto(savedCoordinates);
@@ -63,7 +63,7 @@ public class CoordinatesService {
         coordinatesMapper.updateEntity(coordinates, coordinatesUpdateDto);
 
         // Business-layer constraints
-        coordinatesValidator.validateAreaBelonging(coordinates);
+        // coordinatesValidator.validateAreaBelonging(coordinates);
 
         Coordinates savedCoordinates = coordinatesRepository.save(coordinates);
         CoordinatesDto dto = coordinatesMapper.toDto(savedCoordinates);

@@ -10,7 +10,6 @@ import com.itmo.ticketsystem.venue.VenueRepository;
 import com.itmo.ticketsystem.common.dto.DeleteResponse;
 import com.itmo.ticketsystem.common.exceptions.NotFoundException;
 import com.itmo.ticketsystem.common.security.AuthorizationService;
-import com.itmo.ticketsystem.common.TicketType;
 import com.itmo.ticketsystem.common.ws.ChangeEventPublisher;
 import com.itmo.ticketsystem.event.Event;
 import com.itmo.ticketsystem.event.EventRepository;
@@ -61,8 +60,7 @@ public class TicketService {
         authorizationService.requireAuthenticated(currentUser);
 
         // Business-layer constraints
-        ticketValidator.validateDiscountForType(ticketCreateDto.getType(), ticketCreateDto.getDiscount());
-        ticketValidator.validateEventCapacity(ticketCreateDto.getEventId(), ticketCreateDto.getVenueId());
+        // ticketValidator.validateDiscountForType(ticketCreateDto.getType(), ticketCreateDto.getDiscount());
 
         Ticket ticket = ticketMapper.toEntity(ticketCreateDto);
         ticket.setCreatedBy(currentUser);
@@ -83,11 +81,7 @@ public class TicketService {
         authorizationService.requireCanModify(currentUser, existingTicket.getCreatedBy().getId());
 
         // Business-layer constraints
-        ticketValidator.validateDiscountForType(ticketUpdateDto.getType(), ticketUpdateDto.getDiscount());
-        ticketValidator.validateEventCapacityForUpdate(
-                ticketUpdateDto.getEventId(),
-                ticketUpdateDto.getVenueId(),
-                existingTicket.getId());
+        // ticketValidator.validateDiscountForType(ticketUpdateDto.getType(), ticketUpdateDto.getDiscount());
 
         ticketMapper.updateEntity(existingTicket, ticketUpdateDto);
         existingTicket.setUpdatedBy(currentUser);

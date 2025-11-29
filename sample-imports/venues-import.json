@@ -12,6 +12,11 @@
             "type": "OPEN_AREA"
         },
         {
+            "name": "Grand Arena",
+            "capacity": 5000,
+            "type": "STADIUM"
+        },
+        {
             "name": "Small cinema",
             "capacity": 300,
             "type": "CINEMA"

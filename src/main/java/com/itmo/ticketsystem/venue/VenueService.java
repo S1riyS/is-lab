@@ -21,6 +21,8 @@ public class VenueService {
 
     private final VenueRepository venueRepository;
     private final VenueMapper venueMapper;
+    private final VenueValidator venueValidator;
+
     private final ChangeEventPublisher changeEventPublisher;
     private final AuthorizationService authorizationService;
 
@@ -40,7 +42,12 @@ public class VenueService {
 
         Venue venue = venueMapper.toEntity(venueCreateDto);
         venue.setCreatedBy(currentUser);
+
+        // Business layer uniqueness constraint
+        venueValidator.checkNameUniqueness(venue.getName());
+
         Venue savedVenue = venueRepository.save(venue);
+
         VenueDto dto = venueMapper.toDto(savedVenue);
         changeEventPublisher.publish("venues", ChangeEvent.Operation.CREATE, dto.getId());
         return dto;
@@ -55,6 +62,10 @@ public class VenueService {
         authorizationService.requireCanModifyOrAdmin(currentUser, creatorId);
 
         venueMapper.updateEntity(existingVenue, venueUpdateDto);
+        
+        // Business layer uniqueness constraint
+        venueValidator.checkNameUniqueness(existingVenue.getName());
+
         Venue savedVenue = venueRepository.save(existingVenue);
         VenueDto dto = venueMapper.toDto(savedVenue);
         changeEventPublisher.publish("venues", ChangeEvent.Operation.UPDATE, dto.getId());
