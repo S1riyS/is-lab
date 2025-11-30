@@ -47,6 +47,10 @@ dependencies {
     implementation 'org.apache.commons:commons-lang3'
     implementation 'commons-codec:commons-codec:1.16.0'
     
+    // Spring Retry
+    implementation 'org.springframework.retry:spring-retry'
+    implementation 'org.springframework:spring-aspects'
+    
     // MapStruct for DTO mapping
     implementation 'org.mapstruct:mapstruct:1.5.5.Final'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'

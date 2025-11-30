@@ -6,19 +6,20 @@ import com.itmo.ticketsystem.venue.dto.VenueUpdateDto;
 import com.itmo.ticketsystem.common.dto.DeleteResponse;
 import com.itmo.ticketsystem.common.exceptions.NotFoundException;
 import com.itmo.ticketsystem.common.security.AuthorizationService;
-import com.itmo.ticketsystem.common.service.ApplicationLayerSyncedService;
 import com.itmo.ticketsystem.common.ws.ChangeEventPublisher;
 import com.itmo.ticketsystem.common.ws.ChangeEvent;
+import com.itmo.ticketsystem.user.User;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
-import com.itmo.ticketsystem.user.User;
 
 @Service
 @RequiredArgsConstructor
-public class VenueService extends ApplicationLayerSyncedService {
+public class VenueService {
 
     private final VenueRepository venueRepository;
     private final VenueMapper venueMapper;
@@ -37,28 +38,26 @@ public class VenueService extends ApplicationLayerSyncedService {
                 .orElseThrow(() -> new NotFoundException("Venue not found with ID: " + id));
     }
 
-    public VenueDto createVenue(VenueCreateDto venueCreateDto, User currentUser) {
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public VenueDto createVenue(@Valid VenueCreateDto venueCreateDto, User currentUser) {
         authorizationService.requireAuthenticated(currentUser);
 
         Venue venue = venueMapper.toEntity(venueCreateDto);
         venue.setCreatedBy(currentUser);
 
-        String normalizedName = venue.getName().trim();
+        // TODO: Decide on how to avoid explicitly calling the validator here
+        // Business layer uniqueness constraint
+        venueValidator.checkNameUniqueness(venue.getName());
 
-        // Execute with lock - ensures transaction commits before lock is released
-        return executeWithLock(normalizedName, () -> {
-            // Business layer uniqueness constraint
-            venueValidator.checkNameUniqueness(venue.getName());
+        Venue savedVenue = venueRepository.save(venue);
 
-            Venue savedVenue = venueRepository.save(venue);
-
-            VenueDto dto = venueMapper.toDto(savedVenue);
-            changeEventPublisher.publish("venues", ChangeEvent.Operation.CREATE, dto.getId());
-            return dto;
-        });
+        VenueDto dto = venueMapper.toDto(savedVenue);
+        changeEventPublisher.publish("venues", ChangeEvent.Operation.CREATE, dto.getId());
+        return dto;
     }
 
-    public VenueDto updateVenue(Long id, VenueUpdateDto venueUpdateDto, User currentUser) {
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public VenueDto updateVenue(Long id, @Valid VenueUpdateDto venueUpdateDto, User currentUser) {
         Venue existingVenue = venueRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Venue not found with ID: " + id));
 
@@ -67,18 +66,14 @@ public class VenueService extends ApplicationLayerSyncedService {
 
         venueMapper.updateEntity(existingVenue, venueUpdateDto);
 
-        String normalizedName = existingVenue.getName().trim();
+        // TODO: Decide on how to avoid explicitly calling the validator here
+        // Business layer uniqueness constraint
+        venueValidator.checkNameUniqueness(existingVenue.getName());
 
-        // Execute with lock - ensures transaction commits before lock is released
-        return executeWithLock(normalizedName, () -> {
-            // Business layer uniqueness constraint
-            venueValidator.checkNameUniqueness(existingVenue.getName());
-
-            Venue savedVenue = venueRepository.save(existingVenue);
-            VenueDto dto = venueMapper.toDto(savedVenue);
-            changeEventPublisher.publish("venues", ChangeEvent.Operation.UPDATE, dto.getId());
-            return dto;
-        });
+        Venue savedVenue = venueRepository.save(existingVenue);
+        VenueDto dto = venueMapper.toDto(savedVenue);
+        changeEventPublisher.publish("venues", ChangeEvent.Operation.UPDATE, dto.getId());
+        return dto;
     }
 
     @Transactional

@@ -23,7 +23,6 @@ public class CoordinatesService {
     private final CoordinatesMapper coordinatesMapper;
     private final ChangeEventPublisher changeEventPublisher;
     private final AuthorizationService authorizationService;
-    private final CoordinatesValidator coordinatesValidator;
 
     public Page<CoordinatesDto> getAllCoordinates(Pageable pageable) {
         return coordinatesRepository.findAll(pageable).map(coordinatesMapper::toDto);
@@ -42,9 +41,6 @@ public class CoordinatesService {
         Coordinates coordinates = coordinatesMapper.toEntity(coordinatesCreateDto);
         coordinates.setCreatedBy(currentUser);
 
-        // Business-layer constraints
-        // coordinatesValidator.validateAreaBelonging(coordinates);
-
         Coordinates savedCoordinates = coordinatesRepository.save(coordinates);
         CoordinatesDto dto = coordinatesMapper.toDto(savedCoordinates);
 
@@ -61,9 +57,6 @@ public class CoordinatesService {
         authorizationService.requireCanModifyOrAdmin(currentUser, creatorId);
 
         coordinatesMapper.updateEntity(coordinates, coordinatesUpdateDto);
-
-        // Business-layer constraints
-        // coordinatesValidator.validateAreaBelonging(coordinates);
 
         Coordinates savedCoordinates = coordinatesRepository.save(coordinates);
         CoordinatesDto dto = coordinatesMapper.toDto(savedCoordinates);

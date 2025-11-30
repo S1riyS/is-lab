@@ -50,8 +50,11 @@ public abstract class ApplicationLayerSyncedService {
         Object lock = keyLocks.computeIfAbsent(key, k -> new Object());
 
         // Synchronize around the ENTIRE transaction including commit
+        // synchronized (lock) {
+        //     return transactionTemplate.execute(status -> operation.get());
+        // }
         synchronized (lock) {
-            return transactionTemplate.execute(status -> operation.get());
+            return operation.get();
         }
         // Lock is released AFTER transaction commits to database
     }
@@ -71,11 +74,14 @@ public abstract class ApplicationLayerSyncedService {
         Object lock = keyLocks.computeIfAbsent(key, k -> new Object());
 
         // Synchronize around the ENTIRE transaction including commit
+        // synchronized (lock) {
+        //     transactionTemplate.execute(status -> {
+        //         operation.run();
+        //         return null;
+        //     });
+        // }
         synchronized (lock) {
-            transactionTemplate.execute(status -> {
-                operation.run();
-                return null;
-            });
+            operation.run();
         }
         // Lock is released AFTER transaction commits to database
     }

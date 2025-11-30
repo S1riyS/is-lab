@@ -6,20 +6,19 @@ import com.itmo.ticketsystem.location.dto.LocationUpdateDto;
 import com.itmo.ticketsystem.common.dto.DeleteResponse;
 import com.itmo.ticketsystem.common.exceptions.NotFoundException;
 import com.itmo.ticketsystem.common.security.AuthorizationService;
+import com.itmo.ticketsystem.common.service.ApplicationLayerSyncedService;
 import com.itmo.ticketsystem.common.ws.ChangeEventPublisher;
 import com.itmo.ticketsystem.common.ws.ChangeEvent;
-import com.itmo.ticketsystem.user.User;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import com.itmo.ticketsystem.user.User;
 
 @Service
 @RequiredArgsConstructor
-public class LocationService {
+public class LocationServiceSyncronized extends ApplicationLayerSyncedService {
 
     private final LocationRepository locationRepository;
     private final LocationMapper locationMapper;
@@ -38,27 +37,28 @@ public class LocationService {
                 .orElseThrow(() -> new NotFoundException("Location not found with ID: " + id));
     }
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
-    public LocationDto createLocation(@Valid LocationCreateDto locationCreateDto, User currentUser) {
+    public LocationDto createLocation(LocationCreateDto locationCreateDto, User currentUser) {
         authorizationService.requireAuthenticated(currentUser);
 
         Location location = locationMapper.toEntity(locationCreateDto);
         location.setCreatedBy(currentUser);
 
-        // TODO: Decide on how to avoid explicitly calling the validator here
-        // * Alternative: explicityly call validator here. Will reuse logic
-        // Business layer uniqueness constraint
-        locationValidator.checkNameUniqueness(location.getName());
+        String normalizedName = location.getName().trim();
 
-        Location savedLocation = locationRepository.save(location);
+        // Execute with lock - ensures transaction commits before lock is released
+        return executeWithLock(normalizedName, () -> {
+            // Business layer uniqueness constraint
+            locationValidator.checkNameUniqueness(location.getName());
 
-        LocationDto dto = locationMapper.toDto(savedLocation);
-        changeEventPublisher.publish("locations", ChangeEvent.Operation.CREATE, dto.getId());
-        return dto;
+            Location savedLocation = locationRepository.save(location);
+
+            LocationDto dto = locationMapper.toDto(savedLocation);
+            changeEventPublisher.publish("locations", ChangeEvent.Operation.CREATE, dto.getId());
+            return dto;
+        });
     }
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
-    public LocationDto updateLocation(Long id, @Valid LocationUpdateDto locationUpdateDto, User currentUser) {
+    public LocationDto updateLocation(Long id, LocationUpdateDto locationUpdateDto, User currentUser) {
         Location existingLocation = locationRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Location not found with ID: " + id));
 
@@ -67,14 +67,18 @@ public class LocationService {
 
         locationMapper.updateEntity(existingLocation, locationUpdateDto);
 
-        // TODO: Decide on how to avoid explicitly calling the validator here
-        // Business layer uniqueness constraint
-        locationValidator.checkNameUniqueness(existingLocation.getName());
+        String normalizedName = existingLocation.getName().trim();
 
-        Location savedLocation = locationRepository.save(existingLocation);
-        LocationDto dto = locationMapper.toDto(savedLocation);
-        changeEventPublisher.publish("locations", ChangeEvent.Operation.UPDATE, dto.getId());
-        return dto;
+        // Execute with lock - ensures transaction commits before lock is released
+        return executeWithLock(normalizedName, () -> {
+            // Business layer uniqueness constraint
+            locationValidator.checkNameUniqueness(existingLocation.getName());
+
+            Location savedLocation = locationRepository.save(existingLocation);
+            LocationDto dto = locationMapper.toDto(savedLocation);
+            changeEventPublisher.publish("locations", ChangeEvent.Operation.UPDATE, dto.getId());
+            return dto;
+        });
     }
 
     @Transactional
@@ -97,21 +101,3 @@ public class LocationService {
                 .map(locationMapper::toDto);
     }
 }
-
-/*
- * Note on two-layer validation strategy:
- * 
- * 1. @Valid annotation (line 42, 59) - Executes BEFORE @Transactional
- * - Provides fail-fast validation for quick feedback
- * - Does NOT guarantee atomicity in concurrent scenarios
- * 
- * 2. checkNameUniqueness() (line 49, 69) - Executes INSIDE @Transactional
- * - Protected by SERIALIZABLE isolation level
- * - Prevents phantom reads (race conditions)
- * - THIS is what ensures atomicity
- * 
- * Why keep both?
- * - @Valid catches duplicates early (most cases) - better user experience
- * - checkNameUniqueness() ensures correctness in concurrent scenarios
- * - SERIALIZABLE isolation prevents race condition between check and insert
- */

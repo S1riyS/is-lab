@@ -1,5 +1,7 @@
 package com.itmo.ticketsystem.location.dto;
 
+import com.itmo.ticketsystem.common.validation.UniqueField;
+import com.itmo.ticketsystem.location.LocationRepository;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,5 +20,6 @@ public class LocationCreateDto {
     @NotNull(message = "Z coordinate cannot be null")
     private Long z;
 
+    @UniqueField(repositoryClass = LocationRepository.class, fieldName = "name", message = "Location name must be unique")
     private String name;
 }

@@ -2,6 +2,7 @@ package com.itmo.ticketsystem.common.config;
 
 import java.util.*;
 
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.http.*;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -85,6 +86,20 @@ public class GlobalExceptionHandler {
                 .details(ex.getMessage())
                 .build();
         return new ResponseEntity<>(error, ex.getStatus());
+    }
+
+    @ExceptionHandler(CannotAcquireLockException.class)
+    @ResponseBody
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ResponseEntity<APIErrorResponse> handleCannotAcquireLockException(
+            CannotAcquireLockException ex,
+            HttpServletRequest request) {
+        APIErrorResponse error = APIErrorResponse.builder()
+                .error(HttpStatus.CONFLICT.name())
+                .title("Transaction conflict")
+                .details("A transaction conflict occurred. Please retry the operation.")
+                .build();
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(Exception.class)

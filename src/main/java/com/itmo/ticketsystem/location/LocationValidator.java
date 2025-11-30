@@ -10,11 +10,6 @@ import lombok.RequiredArgsConstructor;
 public class LocationValidator {
     private final LocationRepository locationRepository;
 
-    /**
-     * Checks that a location name is unique.
-     * Note: This check alone is not thread-safe. The caller must ensure proper
-     * synchronization.
-     */
     public void checkNameUniqueness(String name) {
         boolean exists = locationRepository.existsByName(name.trim());
 

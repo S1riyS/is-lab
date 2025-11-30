@@ -18,7 +18,6 @@ import com.itmo.ticketsystem.common.ws.ChangeEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -61,10 +60,6 @@ public class TicketService {
     public TicketDto createTicket(TicketCreateDto ticketCreateDto, User currentUser) {
         authorizationService.requireAuthenticated(currentUser);
 
-        // Business-layer constraints
-        // ticketValidator.validateDiscountForType(ticketCreateDto.getType(),
-        // ticketCreateDto.getDiscount());
-
         Ticket ticket = ticketMapper.toEntity(ticketCreateDto);
         ticket.setCreatedBy(currentUser);
         ticket.setUpdatedBy(currentUser);
@@ -83,10 +78,6 @@ public class TicketService {
                 .orElseThrow(() -> new NotFoundException("Ticket not found with ID: " + id));
 
         authorizationService.requireCanModify(currentUser, existingTicket.getCreatedBy().getId());
-
-        // Business-layer constraints
-        // ticketValidator.validateDiscountForType(ticketUpdateDto.getType(),
-        // ticketUpdateDto.getDiscount());
 
         ticketMapper.updateEntity(existingTicket, ticketUpdateDto);
         existingTicket.setUpdatedBy(currentUser);
