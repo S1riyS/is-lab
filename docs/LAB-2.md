@@ -23,3 +23,18 @@
 1. Location Name
 2. Venue Name
 
+## Конфликты при одновременной работе
+
+### UPDATE
+```text
+Row was updated or deleted by another transaction (or unsaved-value mapping was incorrect)
+```
+
+Решение:
+- Optimistic Lock
+- Isolation level `REPEATABLE_READ`
+- Reties
+
+### CREATE with app-level constraints:
+- Валидация при помощи `@Valid`
+- Isolation level `SERIALIZABLE`
