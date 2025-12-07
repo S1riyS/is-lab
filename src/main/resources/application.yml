@@ -7,15 +7,38 @@ spring:
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:root}
     driver-class-name: org.postgresql.Driver
+    
+    # Apache Commons DBCP2 Connection Pool
+    type: org.apache.commons.dbcp2.BasicDataSource
+    dbcp2:
+      # Базовые настройки пула
+      initial-size: 5                    # Начальное количество соединений
+      max-total: 20                      # Максимальное количество соединений
+      max-idle: 10                       # Максимальное количество неиспользуемых соединений
+      min-idle: 5                        # Минимальное количество неиспользуемых соединений
+      
+      # Таймауты
+      max-wait-millis: 30000            # Максимальное время ожидания соединения (30 сек)
+      
+      # Проверка соединений
+      test-on-borrow: true              # Проверять соединение перед выдачей
+      test-on-return: false             # Проверять соединение при возврате
+      test-while-idle: true             # Проверять неиспользуемые соединения
+      validation-query: SELECT 1        # Запрос для проверки соединения
+      validation-query-timeout: 3       # Таймаут проверки (3 сек)
+      
+      # Очистка соединений
+      time-between-eviction-runs-millis: 60000  # Интервал проверки (1 мин)
+      min-evictable-idle-time-millis: 300000    # Время до удаления простаивающего соединения (5 мин)
   
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
+        format_sql: false
   
   security:
     user:
@@ -47,10 +70,10 @@ server:
 
 logging:
   level:
-    com.itmo.ticketsystem: DEBUG
-    org.springframework.security: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.itmo.ticketsystem: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
 
 management:
   endpoints:

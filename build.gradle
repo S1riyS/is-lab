@@ -33,6 +33,7 @@ dependencies {
     // Database
     implementation 'org.postgresql:postgresql'
     implementation 'org.hibernate.orm:hibernate-core:6.3.1.Final'
+    implementation 'org.apache.commons:commons-dbcp2:2.11.0'
     
     // JSON processing
     implementation 'com.fasterxml.jackson.core:jackson-databind'
