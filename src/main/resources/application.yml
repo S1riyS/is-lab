@@ -39,7 +39,34 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: false
-  
+        
+        # == JPA L2 Cachw with Infinispan ==
+        # Статистика
+        generate_statistics: true                # Включить сбор статистики
+
+        # L2 Cache Configuration
+        cache:
+          use_second_level_cache: true           # Включить L2 кэш
+          use_query_cache: true                  # Включить кэширование запросов
+          region:
+            factory_class: org.infinispan.hibernate.cache.v62.InfinispanRegionFactory
+        
+        # Infinispan Configuration
+        cache.infinispan:
+          # Стратегия по умолчанию
+          entity.eviction.strategy: LRU          # Least Recently Used
+          entity.eviction.max_entries: 1000      # Максимум записей в entity cache
+          entity.expiration.lifespan: 600000     # Время жизни entity (10 мин)
+          entity.expiration.max_idle: 300000     # Максимальное время простоя (5 мин)
+          
+          # Query cache
+          query.eviction.max_entries: 200        # Максимум запросов в кэше
+          query.expiration.lifespan: 120000      # Время жизни запроса (2 мин)
+          
+          # Collection cache
+          collection.eviction.max_entries: 500   # Максимум коллекций в кэше
+          collection.expiration.lifespan: 300000 # Время жизни коллекции (5 мин)
+          
   security:
     user:
       name: admin
@@ -74,10 +101,22 @@ logging:
     org.springframework.security: WARN
     org.hibernate.SQL: WARN
     org.hibernate.type.descriptor.sql.BasicBinder: WARN
+    # Отключить логирование метрик сессий Hibernate
+    org.hibernate.event.internal.StatisticalLoggingSessionEventListener: OFF
+    org.hibernate.stat.internal.StatisticalLoggingSessionEventListener: OFF
+    org.hibernate.engine.internal.StatisticalLoggingSessionEventListener: OFF
+    org.hibernate.event.internal: WARN
+    org.hibernate.stat: WARN
 
 management:
   endpoints:
     web:
       exposure:
         include: health,info,metrics
+
+# Cache Statistics Configuration
+cache:
+  statistics:
+    enabled: true    # Включить логирование статистики L2 кэша
+    verbose: false   # Детальное логирование (false = краткое)
 
