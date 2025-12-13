@@ -21,24 +21,25 @@ public class ConnectionPoolController {
     public Map<String, Object> getConnectionPoolStatus() {
         Map<String, Object> status = new HashMap<>();
 
-        // Проверяем, что используется Apache Commons DBCP2
         if (dataSource instanceof BasicDataSource) {
             BasicDataSource dbcp2DataSource = (BasicDataSource) dataSource;
 
             status.put("type", "Apache Commons DBCP2");
 
-            // Основные параметры пула
-            status.put("paramMaxTotal", dbcp2DataSource.getMaxTotal());
-            status.put("paramMaxIdle", dbcp2DataSource.getMaxIdle());
-            status.put("paramMinIdle", dbcp2DataSource.getMinIdle());
-            status.put("paramInitialSize", dbcp2DataSource.getInitialSize());
+            // Pool params
+            Map<String, Object> params = new HashMap<>();
+            params.put("maxTotal", dbcp2DataSource.getMaxTotal());
+            params.put("maxIdle", dbcp2DataSource.getMaxIdle());
+            params.put("minIdle", dbcp2DataSource.getMinIdle());
+            params.put("initialSize", dbcp2DataSource.getInitialSize());
+            status.put("params", params);
 
-            // Текущее состояние
-            status.put("currentNumActive", dbcp2DataSource.getNumActive());
-            status.put("currentNumIdle", dbcp2DataSource.getNumIdle());
-
-            // Статистика использования
-            status.put("utilizationPercent", calculateUtilization(dbcp2DataSource));
+            // Current state
+            Map<String, Object> currentState = new HashMap<>();
+            currentState.put("numActive", dbcp2DataSource.getNumActive());
+            currentState.put("numIdle", dbcp2DataSource.getNumIdle());
+            currentState.put("utilizationPercent", calculateUtilization(dbcp2DataSource));
+            status.put("currentState", currentState);
 
         } else {
             status.put("type", dataSource.getClass().getName());
