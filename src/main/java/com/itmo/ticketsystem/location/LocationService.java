@@ -11,12 +11,17 @@ import com.itmo.ticketsystem.common.ws.ChangeEvent;
 import com.itmo.ticketsystem.user.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class LocationService {
@@ -38,6 +43,9 @@ public class LocationService {
                 .orElseThrow(() -> new NotFoundException("Location not found with ID: " + id));
     }
 
+    @Retryable(retryFor = {
+            org.springframework.dao.PessimisticLockingFailureException.class,
+    }, maxAttempts = 5, backoff = @Backoff(delay = 100, multiplier = 2, maxDelay = 1000))
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public LocationDto createLocation(@Valid LocationCreateDto locationCreateDto, User currentUser) {
         authorizationService.requireAuthenticated(currentUser);
@@ -57,6 +65,9 @@ public class LocationService {
         return dto;
     }
 
+    @Retryable(retryFor = {
+            org.springframework.dao.PessimisticLockingFailureException.class,
+    }, maxAttempts = 5, backoff = @Backoff(delay = 100, multiplier = 2, maxDelay = 1000))
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public LocationDto updateLocation(Long id, @Valid LocationUpdateDto locationUpdateDto, User currentUser) {
         Location existingLocation = locationRepository.findById(id)
@@ -97,21 +108,3 @@ public class LocationService {
                 .map(locationMapper::toDto);
     }
 }
-
-/*
- * Note on two-layer validation strategy:
- * 
- * 1. @Valid annotation (line 42, 59) - Executes BEFORE @Transactional
- * - Provides fail-fast validation for quick feedback
- * - Does NOT guarantee atomicity in concurrent scenarios
- * 
- * 2. checkNameUniqueness() (line 49, 69) - Executes INSIDE @Transactional
- * - Protected by SERIALIZABLE isolation level
- * - Prevents phantom reads (race conditions)
- * - THIS is what ensures atomicity
- * 
- * Why keep both?
- * - @Valid catches duplicates early (most cases) - better user experience
- * - checkNameUniqueness() ensures correctness in concurrent scenarios
- * - SERIALIZABLE isolation prevents race condition between check and insert
- */

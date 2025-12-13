@@ -13,6 +13,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +40,9 @@ public class VenueService {
                 .orElseThrow(() -> new NotFoundException("Venue not found with ID: " + id));
     }
 
+    @Retryable(retryFor = {
+            org.springframework.dao.PessimisticLockingFailureException.class,
+    }, maxAttempts = 5, backoff = @Backoff(delay = 100, multiplier = 2, maxDelay = 1000))
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public VenueDto createVenue(@Valid VenueCreateDto venueCreateDto, User currentUser) {
         authorizationService.requireAuthenticated(currentUser);
@@ -56,6 +61,9 @@ public class VenueService {
         return dto;
     }
 
+    @Retryable(retryFor = {
+            org.springframework.dao.PessimisticLockingFailureException.class,
+    }, maxAttempts = 5, backoff = @Backoff(delay = 100, multiplier = 2, maxDelay = 1000))
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public VenueDto updateVenue(Long id, @Valid VenueUpdateDto venueUpdateDto, User currentUser) {
         Venue existingVenue = venueRepository.findById(id)
