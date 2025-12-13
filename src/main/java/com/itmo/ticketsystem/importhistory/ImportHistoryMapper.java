@@ -19,6 +19,8 @@ public class ImportHistoryMapper {
                 .userId(importHistory.getUser().getId())
                 .createdCount(importHistory.getCreatedCount())
                 .errorMessage(importHistory.getErrorMessage())
+                .filePath(importHistory.getFilePath())
+                .fileName(importHistory.getFileName())
                 .createdAt(importHistory.getCreatedAt())
                 .build();
     }

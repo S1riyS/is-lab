@@ -22,5 +22,7 @@ public class ImportHistoryDto {
     private Long userId;
     private Integer createdCount;
     private String errorMessage;
+    private String filePath; // Путь к файлу в MinIO
+    private String fileName; // Оригинальное имя файла
     private LocalDateTime createdAt;
 }

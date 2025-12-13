@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin    # логин по умолчанию
+      MINIO_ROOT_PASSWORD: minioadmin  # пароль по умолчанию
+      MINIO_DOMAIN: minio.local       # опционально: для virtual-host-style requests
+    ports:
+      - "9000:9000"  # API порт
+      - "9001:9001"  # Консоль управления (Web UI)
+    volumes:
+      - minio_data:/data
+    networks:
+      - minio_network
+
+volumes:
+  minio_data:
+    driver: local
+
+networks:
+  minio_network:
+    driver: bridge

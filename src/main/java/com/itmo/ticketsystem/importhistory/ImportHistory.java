@@ -43,6 +43,12 @@ public class ImportHistory {
     @Column(name = "error_message", columnDefinition = "TEXT")
     private String errorMessage;
 
+    @Column(name = "file_path")
+    private String filePath; // Path to file in MinIO
+
+    @Column(name = "file_name")
+    private String fileName; // Original filename
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

@@ -29,6 +29,12 @@ public class LocationImportService extends Importer<LocationCreateDto> {
             LocationCreateDto dto = locationDtos[i];
             validateDto(dto, i);
 
+            // TODO: show that this really works
+            // First location should be saved, error on the second
+            // if (i == 1) {
+            // throw new RuntimeException("Mannual error in the middle of transaction");
+            // }
+
             // Use service layer to enforce business logic and uniqueness constraints
             locationService.createLocation(dto, currentUser);
             count++;

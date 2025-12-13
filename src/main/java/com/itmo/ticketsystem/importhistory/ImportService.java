@@ -1,5 +1,6 @@
 package com.itmo.ticketsystem.importhistory;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -8,11 +9,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itmo.ticketsystem.common.EntityType;
-import com.itmo.ticketsystem.common.ImportStatus;
+import com.itmo.ticketsystem.common.exceptions.NotFoundException;
 import com.itmo.ticketsystem.common.security.AuthorizationService;
+import com.itmo.ticketsystem.common.storage.MinIOService;
 import com.itmo.ticketsystem.importhistory.dto.ImportHistoryDto;
 import com.itmo.ticketsystem.importhistory.dto.ImportRequestDto;
 import com.itmo.ticketsystem.importhistory.dto.ImportResultDto;
+import com.itmo.ticketsystem.importhistory.transaction.ImportTransactionCoordinator;
 import com.itmo.ticketsystem.user.User;
 
 import lombok.RequiredArgsConstructor;
@@ -27,7 +30,8 @@ public class ImportService {
     private final ImportHistoryMapper importHistoryMapper;
     private final AuthorizationService authorizationService;
     private final ObjectMapper objectMapper;
-    private final ImportExecutor importExecutor;
+    private final MinIOService minIOService;
+    private final ImportTransactionCoordinator transactionCoordinator;
 
     public List<ImportHistoryDto> getImportHistory(EntityType entityType, User currentUser) {
         authorizationService.requireAuthenticated(currentUser);
@@ -48,54 +52,45 @@ public class ImportService {
     public ImportResultDto importEntities(MultipartFile file, User currentUser) {
         authorizationService.requireAuthenticated(currentUser);
 
-        ImportHistory importHistory = new ImportHistory();
-        importHistory.setUser(currentUser);
-
         try {
-            // Parse the file to get entity type and data
-            log.info("Starting import for user: {}", currentUser.getUsername());
+            log.info("Starting import with 2PC for user: {}", currentUser.getUsername());
+
             ImportRequestDto importRequest = objectMapper.readValue(file.getBytes(), ImportRequestDto.class);
-            EntityType entityType = importRequest.getEntityType();
-            importHistory.setEntityType(entityType);
+            log.info("Import entity type: {}", importRequest.getEntityType());
 
-            log.info("Import entity type: {}", entityType);
-
-            // Execute import in a transaction
-            int count = importExecutor.executeImport(importRequest, currentUser);
-            log.info("Successfully imported {} entities of type {}", count, entityType);
-
-            ImportHistory savedHistory = saveImportHistorySuccess(importHistory, count);
-
-            return ImportResultDto.builder()
-                    .importId(savedHistory.getId())
-                    .status(ImportStatus.SUCCESS)
-                    .createdCount(count)
-                    .build();
+            // Execute 2PC
+            return transactionCoordinator.executeWithTwoPhaseCommit(
+                    file,
+                    importRequest,
+                    currentUser,
+                    file.getOriginalFilename());
 
         } catch (Exception e) {
-            log.error("Import failed for user {}: {}", currentUser.getUsername(), e.getMessage(), e);
-
-            ImportHistory savedHistory = saveImportHistoryFailure(importHistory, e.getMessage());
-
+            log.error("Failed to import file for user {}: {}", currentUser.getUsername(), e.getMessage(), e);
             return ImportResultDto.builder()
-                    .importId(savedHistory.getId())
-                    .status(ImportStatus.FAILED)
+                    .status(com.itmo.ticketsystem.common.ImportStatus.FAILED)
                     .createdCount(0)
-                    .errorMessage(e.getMessage())
+                    .errorMessage("Failed to import file: " + e.getMessage())
                     .build();
         }
     }
 
-    protected ImportHistory saveImportHistorySuccess(ImportHistory importHistory, int count) {
-        importHistory.setStatus(ImportStatus.SUCCESS);
-        importHistory.setCreatedCount(count);
-        return importHistoryRepository.save(importHistory);
+    public ImportHistoryDto getImportHistoryById(Long id, User currentUser) {
+        authorizationService.requireAuthenticated(currentUser);
+
+        ImportHistory history = importHistoryRepository
+                .findById(id)
+                .orElseThrow(() -> new NotFoundException("Import history not found with ID: " + id));
+
+        // Check access
+        if (!authorizationService.isAdmin(currentUser) && !history.getUser().getId().equals(currentUser.getId())) {
+            throw new NotFoundException("Import history not found with ID: " + id);
+        }
+
+        return importHistoryMapper.toDto(history);
     }
 
-    protected ImportHistory saveImportHistoryFailure(ImportHistory importHistory, String errorMessage) {
-        importHistory.setStatus(ImportStatus.FAILED);
-        importHistory.setCreatedCount(0);
-        importHistory.setErrorMessage(errorMessage);
-        return importHistoryRepository.save(importHistory);
+    public InputStream downloadImportFile(String filePath) throws Exception {
+        return minIOService.downloadFile(filePath);
     }
 }

@@ -39,9 +39,15 @@ dependencies {
     implementation 'org.infinispan:infinispan-hibernate-cache-v62:14.0.19.Final'
     implementation 'org.infinispan:infinispan-core:14.0.19.Final'
     implementation 'org.infinispan:infinispan-commons:14.0.19.Final'
+
+    // TODO: remove
     // Транзакции для Infinispan (обе версии для совместимости)
     implementation 'jakarta.transaction:jakarta.transaction-api'
     implementation 'javax.transaction:javax.transaction-api:1.3'
+
+    // MinIO - S3-compatible object storage
+    implementation 'io.minio:minio:8.5.7'
+    
     
     // JSON processing
     implementation 'com.fasterxml.jackson.core:jackson-databind'
