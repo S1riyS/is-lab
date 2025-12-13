@@ -8,28 +8,13 @@ spring:
     password: ${DB_PASSWORD:root}
     driver-class-name: org.postgresql.Driver
     
-    # Apache Commons DBCP2 Connection Pool
+    # == Apache Commons DBCP2 Connection Pool ==
     type: org.apache.commons.dbcp2.BasicDataSource
     dbcp2:
-      # Базовые настройки пула
-      initial-size: 5                    # Начальное количество соединений
-      max-total: 20                      # Максимальное количество соединений
-      max-idle: 10                       # Максимальное количество неиспользуемых соединений
-      min-idle: 5                        # Минимальное количество неиспользуемых соединений
-      
-      # Таймауты
-      max-wait-millis: 30000            # Максимальное время ожидания соединения (30 сек)
-      
-      # Проверка соединений
-      test-on-borrow: true              # Проверять соединение перед выдачей
-      test-on-return: false             # Проверять соединение при возврате
-      test-while-idle: true             # Проверять неиспользуемые соединения
-      validation-query: SELECT 1        # Запрос для проверки соединения
-      validation-query-timeout: 3       # Таймаут проверки (3 сек)
-      
-      # Очистка соединений
-      time-between-eviction-runs-millis: 60000  # Интервал проверки (1 мин)
-      min-evictable-idle-time-millis: 300000    # Время до удаления простаивающего соединения (5 мин)
+      initial-size: 5
+      max-total: 20
+      max-idle: 10 
+      min-idle: 5
   
   jpa:
     hibernate:
@@ -41,31 +26,25 @@ spring:
         format_sql: false
         
         # == JPA L2 Cachw with Infinispan ==
-        # Статистика
-        generate_statistics: true                # Включить сбор статистики
+        # Statistics
+        generate_statistics: true
 
         # L2 Cache Configuration
         cache:
-          use_second_level_cache: true           # Включить L2 кэш
-          use_query_cache: true                  # Включить кэширование запросов
+          use_second_level_cache: true
+          use_query_cache: true
           region:
             factory_class: org.infinispan.hibernate.cache.v62.InfinispanRegionFactory
         
         # Infinispan Configuration
         cache.infinispan:
-          # Стратегия по умолчанию
           entity.eviction.strategy: LRU          # Least Recently Used
           entity.eviction.max_entries: 1000      # Максимум записей в entity cache
           entity.expiration.lifespan: 600000     # Время жизни entity (10 мин)
-          entity.expiration.max_idle: 300000     # Максимальное время простоя (5 мин)
           
           # Query cache
           query.eviction.max_entries: 200        # Максимум запросов в кэше
           query.expiration.lifespan: 120000      # Время жизни запроса (2 мин)
-          
-          # Collection cache
-          collection.eviction.max_entries: 500   # Максимум коллекций в кэше
-          collection.expiration.lifespan: 300000 # Время жизни коллекции (5 мин)
           
   security:
     user:
@@ -119,4 +98,12 @@ cache:
   statistics:
     enabled: true    # Включить логирование статистики L2 кэша
     verbose: false   # Детальное логирование (false = краткое)
+
+# MinIO Configuration
+minio:
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin}
+  bucket-name: ${MINIO_BUCKET:import-files}
+  secure: ${MINIO_SECURE:false}
 
