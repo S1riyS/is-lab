@@ -22,6 +22,8 @@ export type ImportHistoryDto = {
     userId: number;
     createdCount?: number;
     errorMessage?: string;
+    filePath?: string;
+    fileName?: string;
     createdAt: string;
 };
 
