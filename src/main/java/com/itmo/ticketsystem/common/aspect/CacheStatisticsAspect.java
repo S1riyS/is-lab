@@ -14,11 +14,6 @@ import com.itmo.ticketsystem.common.config.CacheStatisticsConfig;
 import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManagerFactory;
 
-/**
- * AOP Aspect для логирования статистики L2 JPA Cache
- * Перехватывает вызовы методов сервисов и собирает статистику
- * об использовании кэша (hits, misses, puts)
- */
 @Slf4j
 @Aspect
 @Component
@@ -37,8 +32,7 @@ public class CacheStatisticsAspect {
 
             if (config.isEnabled()) {
                 if (statistics == null || !statistics.isStatisticsEnabled()) {
-                    log.warn("Cache statistics logging is enabled, but Hibernate statistics are disabled! " +
-                            "Please set 'hibernate.generate_statistics=true' in application.yml");
+                    log.warn("Cache statistics logging is enabled, but Hibernate statistics are disabled!");
                 } else {
                     log.info("CacheStatisticsAspect initialized. Statistics enabled: {}",
                             statistics.isStatisticsEnabled());
@@ -49,66 +43,58 @@ public class CacheStatisticsAspect {
         }
     }
 
+    // All methods in all services
     @Around("execution(* com.itmo.ticketsystem..*Service.*(..))")
     public Object logCacheStatistics(ProceedingJoinPoint joinPoint) throws Throwable {
 
-        // Если логирование выключено, просто выполняем метод
         if (!config.isEnabled()) {
             return joinPoint.proceed();
         }
 
-        // Проверяем, что статистика доступна
         if (statistics == null || !statistics.isStatisticsEnabled()) {
-            // Если статистика не включена, просто выполняем метод
             return joinPoint.proceed();
         }
 
-        // Собираем статистику ДО выполнения метода
+        // Stats before
         long hitsBefore = statistics.getSecondLevelCacheHitCount();
         long missesBefore = statistics.getSecondLevelCacheMissCount();
         long putsBefore = statistics.getSecondLevelCachePutCount();
         long queryHitsBefore = statistics.getQueryCacheHitCount();
         long queryMissesBefore = statistics.getQueryCacheMissCount();
 
-        // Выполняем метод
-        long startTime = System.currentTimeMillis();
+        // Execute
         Object result = joinPoint.proceed();
-        long executionTime = System.currentTimeMillis() - startTime;
 
-        // Собираем статистику ПОСЛЕ выполнения метода
+        // Stats after
         long hitsAfter = statistics.getSecondLevelCacheHitCount();
         long missesAfter = statistics.getSecondLevelCacheMissCount();
         long putsAfter = statistics.getSecondLevelCachePutCount();
         long queryHitsAfter = statistics.getQueryCacheHitCount();
         long queryMissesAfter = statistics.getQueryCacheMissCount();
 
-        // Вычисляем разницу
+        // Delta
         long hitsDelta = hitsAfter - hitsBefore;
         long missesDelta = missesAfter - missesBefore;
         long putsDelta = putsAfter - putsBefore;
         long queryHitsDelta = queryHitsAfter - queryHitsBefore;
         long queryMissesDelta = queryMissesAfter - queryMissesBefore;
 
-        // Логируем, если были обращения к кэшу ИЛИ включен verbose режим
-        boolean hasActivity = (hitsDelta > 0 || missesDelta > 0 || putsDelta > 0
-                || queryHitsDelta > 0 || queryMissesDelta > 0);
+        boolean hasActivity = (hitsDelta > 0 || missesDelta > 0 || putsDelta > 0 || queryHitsDelta > 0
+                || queryMissesDelta > 0);
 
         String className = joinPoint.getTarget().getClass().getSimpleName();
         String methodName = joinPoint.getSignature().getName();
 
-        // Логируем всегда, если включен verbose, или если была активность
         if (hasActivity || config.isVerbose()) {
-            // Формируем сообщение
             StringBuilder message = new StringBuilder();
             message.append("L2 Cache [").append(className).append(".").append(methodName).append("()]");
 
-            // Entity cache статистика
             if (hitsDelta > 0 || missesDelta > 0 || putsDelta > 0) {
-                message.append(" | Entity: Hits=+").append(hitsDelta)
+                message
+                        .append(" | Entity: Hits=+").append(hitsDelta)
                         .append(", Misses=+").append(missesDelta)
                         .append(", Puts=+").append(putsDelta);
 
-                // Вычисляем hit rate для этого вызова
                 long totalRequests = hitsDelta + missesDelta;
                 if (totalRequests > 0) {
                     double hitRate = (double) hitsDelta / totalRequests * 100;
@@ -116,7 +102,6 @@ public class CacheStatisticsAspect {
                 }
             }
 
-            // Query cache статистика
             if (queryHitsDelta > 0 || queryMissesDelta > 0) {
                 message.append(" | Query: Hits=+").append(queryHitsDelta)
                         .append(", Misses=+").append(queryMissesDelta);
@@ -128,12 +113,6 @@ public class CacheStatisticsAspect {
                 }
             }
 
-            // Добавляем время выполнения в verbose режиме
-            if (config.isVerbose()) {
-                message.append(" | Time=").append(executionTime).append("ms");
-            }
-
-            // Если была активность, логируем как INFO, иначе как DEBUG
             if (hasActivity) {
                 log.info(message.toString());
             } else if (config.isVerbose()) {
@@ -142,17 +121,5 @@ public class CacheStatisticsAspect {
         }
 
         return result;
-    }
-
-    /**
-     * ТЕСТОВЫЙ pointcut для проверки работы AOP
-     * Перехватывает ВСЕ методы в контроллерах
-     */
-    @Around("execution(* com.itmo.ticketsystem..controller..*.*(..))")
-    public Object testAspect(ProceedingJoinPoint joinPoint) throws Throwable {
-        log.warn("=== TEST ASPECT: {}.{}() ===",
-                joinPoint.getTarget().getClass().getSimpleName(),
-                joinPoint.getSignature().getName());
-        return joinPoint.proceed();
     }
 }
