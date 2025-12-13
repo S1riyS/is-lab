@@ -30,6 +30,7 @@
           </elementProp>
         </collectionProp>
       </elementProp>
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
     </TestPlan>
     <hashTree>
       <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager">
@@ -41,7 +42,7 @@
         </collectionProp>
       </HeaderManager>
       <hashTree/>
-      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Test 1 - CRUD and Import Operations" enabled="false">
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Test 1 - CRUD and Import Operations">
         <intProp name="ThreadGroup.num_threads">10</intProp>
         <stringProp name="ThreadGroup.ramp_time">0.5</stringProp>
         <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
@@ -52,7 +53,7 @@
         </elementProp>
       </ThreadGroup>
       <hashTree>
-        <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="Generate User Data" enabled="true">
+        <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="Generate User Data">
           <stringProp name="cacheKey">true</stringProp>
           <stringProp name="filename">jmeter/scripts/gererate_userdata.groovy</stringProp>
           <stringProp name="parameters"></stringProp>
@@ -60,154 +61,72 @@
           <stringProp name="scriptLanguage">groovy</stringProp>
         </JSR223PreProcessor>
         <hashTree/>
-        <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="Prepare Test Data" enabled="true">
+        <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="Prepare Test Data">
           <stringProp name="scriptLanguage">groovy</stringProp>
           <stringProp name="parameters"></stringProp>
           <stringProp name="filename"></stringProp>
           <stringProp name="cacheKey">true</stringProp>
           <stringProp name="script">import groovy.json.JsonBuilder
 
-            def rnd = new Random()
-            def threadNum = ctx.getThreadNum()
-            def timestamp = System.currentTimeMillis()
+def rnd = new Random()
+def threadNum = ctx.getThreadNum()
+def timestamp = System.currentTimeMillis()
 
-            def colors = [&apos;RED&apos;, &apos;YELLOW&apos;, &apos;ORANGE&apos;,
-            &apos;WHITE&apos;, &apos;BROWN&apos;]
-            def countries = [&apos;USA&apos;, &apos;SPAIN&apos;, &apos;SOUTH_KOREA&apos;,
-            &apos;JAPAN&apos;]
-            def ticketTypes = [&apos;VIP&apos;, &apos;USUAL&apos;, &apos;BUDGETARY&apos;,
-            &apos;CHEAP&apos;]
-            def venueTypes = [&apos;OPEN_AREA&apos;, &apos;CINEMA&apos;, &apos;STADIUM&apos;]
+def colors = [&apos;RED&apos;, &apos;YELLOW&apos;, &apos;ORANGE&apos;, &apos;WHITE&apos;, &apos;BROWN&apos;]
+def countries = [&apos;USA&apos;, &apos;SPAIN&apos;, &apos;SOUTH_KOREA&apos;, &apos;JAPAN&apos;]
+def ticketTypes = [&apos;VIP&apos;, &apos;USUAL&apos;, &apos;BUDGETARY&apos;, &apos;CHEAP&apos;]
+def venueTypes = [&apos;OPEN_AREA&apos;, &apos;CINEMA&apos;, &apos;STADIUM&apos;]
 
-            def coordinates = [
-            x: rnd.nextInt(100) - 50,
-            y: rnd.nextFloat() * 200 - 100
-            ]
+def coordinates = [
+	x: rnd.nextInt(100) - 50,
+	y: rnd.nextFloat() * 200 - 100
+]
 
-            def location = [
-            x: rnd.nextInt(10000) - 5000,
-            y: rnd.nextInt(100000) + 1,
-            z: rnd.nextInt(50000) + 1,
-            name: &quot;Location_${threadNum}_${timestamp}&quot;
-            ]
+def location = [
+	x: rnd.nextInt(10000) - 5000,
+	y: rnd.nextInt(100000) + 1,
+	z: rnd.nextInt(50000) + 1,
+	name: &quot;Location_${threadNum}_${timestamp}&quot;
+]
 
-            def person = [
-            eyeColor: colors[rnd.nextInt(colors.size())],
-            hairColor: colors[rnd.nextInt(colors.size())],
-            passportID: &quot;PASSPORT_${threadNum}_${timestamp}&quot;,
-            nationality: countries[rnd.nextInt(countries.size())]
-            ]
 
-            def event = [
-            name: &quot;Event_${threadNum}_${timestamp}&quot;,
-            date: new Date().format(&quot;yyyy-MM-dd&apos;T&apos;HH:mm:ssXXX&quot;),
-            minAge: rnd.nextInt(18) + 18,
-            description: &quot;Test event ${timestamp}&quot;
-            ]
+def person = [
+	eyeColor: colors[rnd.nextInt(colors.size())],
+	hairColor: colors[rnd.nextInt(colors.size())],
+	passportID: &quot;PASSPORT_${threadNum}_${timestamp}&quot;,
+	nationality: countries[rnd.nextInt(countries.size())]
+]
 
-            def venue = [
-            name: &quot;Venue_${threadNum}_${timestamp}&quot;,
-            capacity: rnd.nextInt(1000) + 100,
-            type: venueTypes[rnd.nextInt(venueTypes.size())]
-            ]
+def event = [
+	name: &quot;Event_${threadNum}_${timestamp}&quot;,
+	date: new Date().format(&quot;yyyy-MM-dd&apos;T&apos;HH:mm:ssXXX&quot;),
+	minAge: rnd.nextInt(18) + 18,
+	description: &quot;Test event ${timestamp}&quot;
+]
 
-            def ticket = [
-            name: &quot;Ticket_${threadNum}_${timestamp}&quot;,
-            price: rnd.nextDouble() * 1000 + 100,
-            type: ticketTypes[rnd.nextInt(ticketTypes.size())],
-            discount: rnd.nextDouble() * 20,
-            number: rnd.nextDouble() * 100 + 1,
-            comment: &quot;Test ticket ${timestamp}&quot;
-            ]
+def venue = [
+	name: &quot;Venue_${threadNum}_${timestamp}&quot;,
+	capacity: rnd.nextInt(1000) + 100,
+	type: venueTypes[rnd.nextInt(venueTypes.size())]
+]
 
-            vars.put(&apos;coordinates_json&apos;, new JsonBuilder(coordinates).toString())
-            vars.put(&apos;location_json&apos;, new JsonBuilder(location).toString())
-            vars.put(&apos;person_json&apos;, new JsonBuilder(person).toString())
-            vars.put(&apos;event_json&apos;, new JsonBuilder(event).toString())
-            vars.put(&apos;venue_json&apos;, new JsonBuilder(venue).toString())
-            vars.put(&apos;ticket_json&apos;, new JsonBuilder(ticket).toString())
-            log.info(&quot;Generated test data for thread ${threadNum}&quot;)
+def ticket = [
+	name: &quot;Ticket_${threadNum}_${timestamp}&quot;,
+	price: rnd.nextDouble() * 1000 + 100,
+	type: ticketTypes[rnd.nextInt(ticketTypes.size())],
+	discount: rnd.nextDouble() * 20,
+	number: rnd.nextDouble() * 100 + 1,
+	comment: &quot;Test ticket ${timestamp}&quot;
+]
+
+vars.put(&apos;coordinates_json&apos;, new JsonBuilder(coordinates).toString())
+vars.put(&apos;location_json&apos;, new JsonBuilder(location).toString())
+vars.put(&apos;person_json&apos;, new JsonBuilder(person).toString())
+vars.put(&apos;event_json&apos;, new JsonBuilder(event).toString())
+vars.put(&apos;venue_json&apos;, new JsonBuilder(venue).toString())
+vars.put(&apos;ticket_json&apos;, new JsonBuilder(ticket).toString())
+log.info(&quot;Generated test data for thread ${threadNum}&quot;)
 </stringProp>
-        </JSR223PreProcessor>
-        <hashTree/>
-        <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="Prepare Import File" enabled="true">
-          <stringProp name="scriptLanguage">groovy</stringProp>
-          <stringProp name="parameters"></stringProp>
-          <stringProp name="filename"></stringProp>
-          <stringProp name="cacheKey">true</stringProp>
-          <stringProp name="script">import groovy.json.JsonBuilder
-
-            def rnd = new Random()
-            def threadNum = ctx.getThreadNum()
-            def timestamp = System.currentTimeMillis()
-
-            def colors = [&apos;RED&apos;, &apos;YELLOW&apos;, &apos;ORANGE&apos;,
-            &apos;WHITE&apos;, &apos;BROWN&apos;]
-            def countries = [&apos;USA&apos;, &apos;SPAIN&apos;, &apos;SOUTH_KOREA&apos;,
-            &apos;JAPAN&apos;]
-            def ticketTypes = [&apos;VIP&apos;, &apos;USUAL&apos;, &apos;BUDGETARY&apos;,
-            &apos;CHEAP&apos;]
-            def venueTypes = [&apos;OPEN_AREA&apos;, &apos;CINEMA&apos;, &apos;STADIUM&apos;]
-
-            def numTickets = rnd.nextInt(3) + 1
-            def tickets = []
-            for (int i = 0; i &lt; numTickets; i++) {
-            def coordinates = [
-            x: rnd.nextInt(100) - 50,
-            y: rnd.nextFloat() * 200 - 100
-            ]
-            def location = [
-            x: rnd.nextInt(10000) - 5000,
-            y: rnd.nextInt(100000) + 1,
-            z: rnd.nextInt(50000) + 1,
-            name: &quot;ImportLocation_${threadNum}_${i}_${timestamp}&quot;
-            ]
-            def person = [
-            eyeColor: colors[rnd.nextInt(colors.size())],
-            hairColor: colors[rnd.nextInt(colors.size())],
-            location: location,
-            passportID:
-            &quot;IMPORT_${threadNum}_${i}_${timestamp}&quot;,
-            nationality: countries[rnd.nextInt(countries.size())]
-            ]
-            def event = [
-            name: &quot;ImportEvent_${threadNum}_${i}_${timestamp}&quot;,
-            date: new Date().format(&quot;yyyy-MM-dd&apos;T&apos;HH:mm:ssXXX&quot;),
-            minAge: rnd.nextInt(18) + 18,
-            description: &quot;Import event ${i}&quot;
-            ]
-            def venue = [
-            name: &quot;ImportVenue_${threadNum}_${i}_${timestamp}&quot;,
-            capacity: rnd.nextInt(1000) + 100,
-            type: venueTypes[rnd.nextInt(venueTypes.size())]
-            ]
-            def ticket = [
-            name: &quot;ImportTicket_${threadNum}_${i}_${timestamp}&quot;,
-            coordinates: coordinates,
-            person: person,
-            event: event,
-            price: rnd.nextDouble() * 1000 + 100,
-            type: ticketTypes[rnd.nextInt(ticketTypes.size())],
-            discount: rnd.nextDouble() * 20,
-            number: rnd.nextDouble() * 100 + 1,
-            comment: &quot;Import ticket ${i}&quot;,
-            venue: venue
-            ]
-            tickets.add(ticket)
-            }
-            // Required format
-            def importData = [
-            entityType: &quot;TICKET&quot;,
-            data: tickets
-            ]
-
-            def fileName = &quot;import_tickets_${threadNum}_${timestamp}.json&quot;
-            def filePath = &quot;./tmp/${fileName}&quot;
-            def file = new File(filePath)
-            file.parentFile.mkdirs()
-            file.write(new JsonBuilder(importData).toPrettyString())
-            vars.put(&quot;import_file_path&quot;, filePath)
-            log.info(&quot;Generated import file: ${filePath} with ${numTickets} tickets&quot;)</stringProp>
         </JSR223PreProcessor>
         <hashTree/>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Register User" enabled="true">
@@ -653,7 +572,7 @@
           </ResponseAssertion>
           <hashTree/>
         </hashTree>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="IMPORT Tickets" enabled="true">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="IMPORT Tickets">
           <stringProp name="HTTPSampler.domain">localhost</stringProp>
           <stringProp name="HTTPSampler.port">8080</stringProp>
           <stringProp name="HTTPSampler.protocol">http</stringProp>
@@ -697,6 +616,98 @@
             <stringProp name="Assertion.custom_message"></stringProp>
           </ResponseAssertion>
           <hashTree/>
+          <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="Prepare Import File">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="cacheKey">true</stringProp>
+            <stringProp name="script">import groovy.json.JsonBuilder
+
+def rnd = new Random()
+def threadNum = ctx.getThreadNum()
+def timestamp = System.currentTimeMillis()
+
+def colors = [&apos;RED&apos;, &apos;YELLOW&apos;, &apos;ORANGE&apos;, &apos;WHITE&apos;, &apos;BROWN&apos;]
+def countries = [&apos;USA&apos;, &apos;SPAIN&apos;, &apos;SOUTH_KOREA&apos;, &apos;JAPAN&apos;]
+def ticketTypes = [&apos;VIP&apos;, &apos;USUAL&apos;, &apos;BUDGETARY&apos;, &apos;CHEAP&apos;]
+def venueTypes = [&apos;OPEN_AREA&apos;, &apos;CINEMA&apos;, &apos;STADIUM&apos;]
+
+def numTickets = rnd.nextInt(3) + 1
+def tickets = []
+
+for (int i = 0; i &lt; numTickets; i++) {
+    def coordinates = [
+        x: rnd.nextInt(100) - 50,
+        y: rnd.nextFloat() * 200 - 100
+    ]
+
+    // Check if threadNum is 1 and set unique location name
+    def locationName = &quot;&quot;
+    if (threadNum == 1) {
+    	locationName = &quot;UNIQUE_LOC_NAME&quot;
+    } else {
+	locationName = &quot;Location_${threadNum}_${i}_${timestamp}&quot;
+    }
+    def location = [
+        x: rnd.nextInt(10000) - 5000,
+        y: rnd.nextInt(100000) + 1,
+        z: rnd.nextInt(50000) + 1,
+        name: locationName
+    ]
+
+    def person = [
+        eyeColor: colors[rnd.nextInt(colors.size())],
+        hairColor: colors[rnd.nextInt(colors.size())],
+        location: location,
+        passportID: &quot;IMPORT_${threadNum}_${i}_${timestamp}&quot;,
+        nationality: countries[rnd.nextInt(countries.size())]
+    ]
+    
+    def event = [
+        name: &quot;ImportEvent_${threadNum}_${i}_${timestamp}&quot;,
+        date: new Date().format(&quot;yyyy-MM-dd&apos;T&apos;HH:mm:ssXXX&quot;),
+        minAge: rnd.nextInt(18) + 18,
+        description: &quot;Import event ${i}&quot;
+    ]
+    
+    def venue = [
+        name: &quot;ImportVenue_${threadNum}_${i}_${timestamp}&quot;,
+        capacity: rnd.nextInt(1000) + 100,
+        type: venueTypes[rnd.nextInt(venueTypes.size())]
+    ]
+    
+    def ticket = [
+        name: &quot;ImportTicket_${threadNum}_${i}_${timestamp}&quot;,
+        coordinates: coordinates,
+        person: person,
+        event: event,
+        price: rnd.nextDouble() * 1000 + 100,
+        type: ticketTypes[rnd.nextInt(ticketTypes.size())],
+        discount: rnd.nextDouble() * 20,
+        number: rnd.nextDouble() * 100 + 1,
+        comment: &quot;Import ticket ${i}&quot;,
+        venue: venue
+    ]
+    
+    tickets.add(ticket)
+}
+
+// Required format
+def importData = [
+    entityType: &quot;TICKET&quot;,
+    data: tickets
+]
+
+def fileName = &quot;import_tickets_${threadNum}_${timestamp}.json&quot;
+def filePath = &quot;./tmp/${fileName}&quot;
+def file = new File(filePath)
+file.parentFile.mkdirs()
+file.write(new JsonBuilder(importData).toPrettyString())
+
+vars.put(&quot;import_file_path&quot;, filePath)
+log.info(&quot;Generated import file: ${filePath} with ${numTickets} tickets&quot;)</stringProp>
+          </JSR223PreProcessor>
+          <hashTree/>
         </hashTree>
       </hashTree>
       <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Test 2 - Concurrent UPDATE" enabled="false">
@@ -710,7 +721,7 @@
         </elementProp>
       </ThreadGroup>
       <hashTree>
-        <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="Generate User Data">
+        <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="Generate User Data" enabled="true">
           <stringProp name="cacheKey">true</stringProp>
           <stringProp name="filename">jmeter/scripts/gererate_userdata.groovy</stringProp>
           <stringProp name="parameters"></stringProp>
@@ -749,7 +760,7 @@
           </JSONPostProcessor>
           <hashTree/>
         </hashTree>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Get Shared Ticket">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Get Shared Ticket" enabled="true">
           <stringProp name="HTTPSampler.domain">localhost</stringProp>
           <stringProp name="HTTPSampler.port">8080</stringProp>
           <stringProp name="HTTPSampler.protocol">http</stringProp>
@@ -779,7 +790,7 @@
           </JSONPostProcessor>
           <hashTree/>
         </hashTree>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="UPDATE Shared Ticket Concurrently">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="UPDATE Shared Ticket Concurrently" enabled="true">
           <stringProp name="HTTPSampler.domain">localhost</stringProp>
           <stringProp name="HTTPSampler.port">8080</stringProp>
           <stringProp name="HTTPSampler.protocol">http</stringProp>
@@ -838,7 +849,7 @@
           <hashTree/>
         </hashTree>
       </hashTree>
-      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Test 3 - Concurrent CREATE with Duplicate">
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Test 3 - Concurrent CREATE with Duplicate" enabled="false">
         <stringProp name="ThreadGroup.num_threads">${CONCURRENT_CREATE_THREAD_COUNT}</stringProp>
         <stringProp name="ThreadGroup.ramp_time">0.5</stringProp>
         <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
@@ -979,7 +990,7 @@ vars.put(&quot;location_json&quot;, new JsonBuilder(location).toString())</strin
         </elementProp>
       </PostThreadGroup>
       <hashTree>
-        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Delete Tmp Folder" enabled="true">
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Delete Tmp Folder">
           <stringProp name="cacheKey">true</stringProp>
           <stringProp name="filename"></stringProp>
           <stringProp name="parameters"></stringProp>
@@ -1001,7 +1012,7 @@ vars.put(&quot;location_json&quot;, new JsonBuilder(location).toString())</strin
           <stringProp name="scriptLanguage">groovy</stringProp>
         </JSR223Sampler>
         <hashTree/>
-        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Clear Shared Properties" enabled="true">
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Clear Shared Properties">
           <stringProp name="cacheKey">true</stringProp>
           <stringProp name="filename"></stringProp>
           <stringProp name="parameters"></stringProp>
@@ -1087,7 +1098,7 @@ vars.put(&quot;location_json&quot;, new JsonBuilder(location).toString())</strin
         <stringProp name="filename"></stringProp>
       </ResultCollector>
       <hashTree/>
-      <ResultCollector guiclass="StatVisualizer" testclass="ResultCollector" testname="Aggregate Report">
+      <ResultCollector guiclass="StatVisualizer" testclass="ResultCollector" testname="Aggregate Report" enabled="true">
         <boolProp name="ResultCollector.error_logging">false</boolProp>
         <objProp>
           <name>saveConfig</name>
