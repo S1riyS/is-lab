@@ -31,7 +31,7 @@ public class DatabaseParticipant {
     public record CommitResult(int count) {
     }
 
-    public PrepareResult prepare(UUID txId, ImportRequestDto request, User user, String pendingPath, String finalPath) {
+    public PrepareResult prepare(UUID txId, ImportRequestDto request, User user, String pendingPath) {
         log.info("[2PC DB] PREPARE: creating transaction record for txId={}", txId);
 
         TransactionTemplate tt = new TransactionTemplate(transactionManager);
@@ -44,7 +44,7 @@ public class DatabaseParticipant {
                     .entityType(request.getEntityType())
                     .status(ImportStatus.PENDING)
                     .pendingFilePath(pendingPath)
-                    .filePath(finalPath)
+                    .filePath(null)
                     .build();
             history = importHistoryRepository.save(history);
 
@@ -55,7 +55,7 @@ public class DatabaseParticipant {
         return result;
     }
 
-    public CommitResult commit(UUID txId, ImportRequestDto request, User user) {
+    public CommitResult commit(UUID txId, ImportRequestDto request, User user, String finalPath) {
         log.info("[2PC DB] COMMIT: importing data for txId={}", txId);
 
         TransactionTemplate tt = new TransactionTemplate(transactionManager);
@@ -78,8 +78,11 @@ public class DatabaseParticipant {
             int count = importExecutor.executeImport(request, user);
 
             // Set COMMITTED status
-            history.setCreatedCount(count);
             history.setTransactionStatus(TransactionState.COMMITTED);
+            history.setStatus(ImportStatus.SUCCESS);
+            history.setCreatedCount(count);
+            history.setFilePath(finalPath);
+            history.setPendingFilePath(null);
             history.setUpdatedAt(LocalDateTime.now());
             importHistoryRepository.save(history);
 

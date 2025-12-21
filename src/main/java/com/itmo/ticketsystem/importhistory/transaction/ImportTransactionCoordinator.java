@@ -1,6 +1,5 @@
 package com.itmo.ticketsystem.importhistory.transaction;
 
-import com.itmo.ticketsystem.common.EntityType;
 import com.itmo.ticketsystem.common.ImportStatus;
 import com.itmo.ticketsystem.importhistory.ImportHistory;
 import com.itmo.ticketsystem.importhistory.ImportHistoryRepository;
@@ -13,12 +12,8 @@ import com.itmo.ticketsystem.user.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 @Slf4j
@@ -31,7 +26,6 @@ public class ImportTransactionCoordinator {
     private final DatabaseParticipant databaseParticipant;
 
     private final ImportHistoryRepository importHistoryRepository;
-    private final PlatformTransactionManager txManager;
 
     public ImportResultDto run(
             MultipartFile file,
@@ -49,16 +43,12 @@ public class ImportTransactionCoordinator {
             // ============ PHASE 1: PREPARE ============
             log.info("[2PC] Transaction {} - PHASE 1: PREPARE", txId);
 
-            finalPath = buildFilePath(request.getEntityType(), user, fileName);
-
             // 1.1 MinIO Prepare: load to staging
+            finalPath = minIOParticipant.buildFinalPath(request.getEntityType(), user, fileName);
             stagingPath = minIOParticipant.prepare(txId, file, finalPath);
 
             // 1.2 Database Prepare
-            databaseParticipant.prepare(txId, request, user, stagingPath, finalPath);
-
-            // Update ImportHistory with fileName
-            updateImportHistoryFileName(txId, fileName);
+            databaseParticipant.prepare(txId, request, user, stagingPath);
 
             log.info("[2PC] Transaction {} - PREPARED (all participants ready)", txId);
 
@@ -66,15 +56,16 @@ public class ImportTransactionCoordinator {
             log.info("[2PC] Transaction {} - PHASE 2: COMMIT", txId);
 
             // 2.1 Database Commit
-            CommitResult commitResult = databaseParticipant.commit(txId, request, user);
+            CommitResult commitResult = databaseParticipant.commit(txId, request, user, finalPath);
 
             // 2.2 MinIO Commit: move file from staging to finalPath
             minIOParticipant.commit(stagingPath, finalPath);
 
             log.info("[2PC] ========== Transaction {} COMMITTED (count={}) ==========", txId, commitResult.count());
 
-            // Finalize ImportHistory with SUCCESS status
-            ImportHistory history = finalizeImportHistory(txId, ImportStatus.SUCCESS, commitResult.count(), null);
+            ImportHistory history = importHistoryRepository
+                    .findByTransactionId(txId)
+                    .orElseThrow(() -> new IllegalStateException("ImportHistory not found for txId: " + txId));
 
             return ImportResultDto.builder()
                     .importId(history.getId())
@@ -118,43 +109,5 @@ public class ImportTransactionCoordinator {
         }
 
         log.info("[2PC] ========== Transaction {} ABORTED ==========", txId);
-    }
-
-    // ==================== Helper Methods ====================
-
-    private void updateImportHistoryFileName(UUID txId, String fileName) {
-        TransactionTemplate tt = new TransactionTemplate(txManager);
-        tt.executeWithoutResult(txStatus -> {
-            importHistoryRepository.findByTransactionId(txId).ifPresent(history -> {
-                history.setFileName(fileName);
-                importHistoryRepository.save(history);
-            });
-        });
-    }
-
-    private ImportHistory finalizeImportHistory(UUID txId, ImportStatus status, int count, String errorMessage) {
-        TransactionTemplate tt = new TransactionTemplate(txManager);
-        return tt.execute(txStatus -> {
-            ImportHistory history = importHistoryRepository.findByTransactionId(txId)
-                    .orElseThrow(() -> new IllegalStateException("ImportHistory not found for txId: " + txId));
-            history.setStatus(status);
-            history.setCreatedCount(count);
-            if (errorMessage != null) {
-                history.setErrorMessage(errorMessage);
-            }
-            return importHistoryRepository.save(history);
-        });
-    }
-
-    private String buildFilePath(EntityType entityType, User user, String originalFileName) {
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
-        String fileName = (originalFileName != null && !originalFileName.isEmpty())
-                ? originalFileName
-                : "import.json";
-        return String.format("%s/%d/%s-%s",
-                entityType.name().toLowerCase(),
-                user.getId(),
-                timestamp,
-                fileName);
     }
 }

@@ -16,7 +16,6 @@ public interface ImportHistoryRepository extends JpaRepository<ImportHistory, Lo
 
     List<ImportHistory> findByEntityTypeOrderByCreatedAtDesc(EntityType entityType);
 
-    // Transaction-related methods for 2PC
     Optional<ImportHistory> findByTransactionId(UUID transactionId);
 
     List<ImportHistory> findByTransactionStatusIn(List<TransactionState> statuses);

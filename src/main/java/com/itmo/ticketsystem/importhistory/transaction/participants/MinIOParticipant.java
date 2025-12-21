@@ -1,12 +1,16 @@
 package com.itmo.ticketsystem.importhistory.transaction.participants;
 
+import com.itmo.ticketsystem.common.EntityType;
 import com.itmo.ticketsystem.common.storage.MinIOService;
+import com.itmo.ticketsystem.user.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 @Slf4j
@@ -70,5 +74,17 @@ public class MinIOParticipant {
             return pendingPath.substring(prefix.length());
         }
         return pendingPath;
+    }
+
+    public String buildFinalPath(EntityType entityType, User user, String originalFileName) {
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+        String fileName = (originalFileName != null && !originalFileName.isEmpty())
+                ? originalFileName
+                : "import.json";
+        return String.format("%s/%d/%s-%s",
+                entityType.name().toLowerCase(),
+                user.getId(),
+                timestamp,
+                fileName);
     }
 }
