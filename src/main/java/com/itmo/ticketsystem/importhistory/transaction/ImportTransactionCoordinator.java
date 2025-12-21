@@ -7,13 +7,14 @@ import com.itmo.ticketsystem.importhistory.ImportHistoryRepository;
 import com.itmo.ticketsystem.importhistory.dto.ImportRequestDto;
 import com.itmo.ticketsystem.importhistory.dto.ImportResultDto;
 import com.itmo.ticketsystem.importhistory.transaction.participants.DatabaseParticipant;
+import com.itmo.ticketsystem.importhistory.transaction.participants.DatabaseParticipant.CommitResult;
 import com.itmo.ticketsystem.importhistory.transaction.participants.MinIOParticipant;
 import com.itmo.ticketsystem.user.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
@@ -25,12 +26,14 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ImportTransactionCoordinator {
 
+    // Participants
     private final MinIOParticipant minIOParticipant;
     private final DatabaseParticipant databaseParticipant;
-    private final ImportTransactionRepository txRepository;
-    private final ImportHistoryRepository importHistoryRepository;
 
-    public ImportResultDto executeWithTwoPhaseCommit(
+    private final ImportHistoryRepository importHistoryRepository;
+    private final PlatformTransactionManager txManager;
+
+    public ImportResultDto run(
             MultipartFile file,
             ImportRequestDto request,
             User user,
@@ -39,79 +42,57 @@ public class ImportTransactionCoordinator {
         UUID txId = UUID.randomUUID();
         log.info("[2PC] ========== Transaction {} STARTED ==========", txId);
 
-        // New transaction record
-        ImportTransaction tx = createTransaction(txId, user.getId(), request.getEntityType());
-        String pendingPath = null;
+        String stagingPath = null;
         String finalPath = null;
-        int count = 0;
 
         try {
             // ============ PHASE 1: PREPARE ============
             log.info("[2PC] Transaction {} - PHASE 1: PREPARE", txId);
 
-            // 1.1 Final path
             finalPath = buildFilePath(request.getEntityType(), user, fileName);
-            tx.setFinalFilePath(finalPath);
 
-            // 1.2 MinIO Prepare: save tmp file
-            pendingPath = minIOParticipant.prepare(txId, file, finalPath);
-            tx.setPendingFilePath(pendingPath);
-            updateTransactionStatus(tx, TransactionState.STARTED);
+            // 1.1 MinIO Prepare: load to staging
+            stagingPath = minIOParticipant.prepare(txId, file, finalPath);
 
-            // 1.3 Database Prepare: import without commit
-            count = databaseParticipant.prepare(txId, request, user);
-            tx.setCreatedCount(count);
+            // 1.2 Database Prepare
+            databaseParticipant.prepare(txId, request, user, stagingPath, finalPath);
 
-            // 1.4 All participants ready -> PREPARED
-            updateTransactionStatus(tx, TransactionState.PREPARED);
-            log.info("[2PC] Transaction {} - PREPARED (count={})", txId, count);
+            // Update ImportHistory with fileName
+            updateImportHistoryFileName(txId, fileName);
+
+            log.info("[2PC] Transaction {} - PREPARED (all participants ready)", txId);
 
             // ============ PHASE 2: COMMIT ============
             log.info("[2PC] Transaction {} - PHASE 2: COMMIT", txId);
-            updateTransactionStatus(tx, TransactionState.COMMITTING);
 
             // 2.1 Database Commit
-            databaseParticipant.commit(txId);
+            CommitResult commitResult = databaseParticipant.commit(txId, request, user);
 
-            // 2.2 MinIO Commit: move file to its destination
-            minIOParticipant.commit(pendingPath, finalPath);
+            // 2.2 MinIO Commit: move file from staging to finalPath
+            minIOParticipant.commit(stagingPath, finalPath);
 
-            // 2.3 SUCCESS
-            updateTransactionStatus(tx, TransactionState.COMMITTED);
-            log.info("[2PC] ========== Transaction {} COMMITTED ==========", txId);
+            log.info("[2PC] ========== Transaction {} COMMITTED (count={}) ==========", txId, commitResult.count());
 
-            // Save import history record (in separate transaction)
-            ImportHistory history = saveImportHistory(
-                    user,
-                    request.getEntityType(),
-                    ImportStatus.SUCCESS,
-                    count,
-                    finalPath, fileName,
-                    null);
+            // Finalize ImportHistory with SUCCESS status
+            ImportHistory history = finalizeImportHistory(txId, ImportStatus.SUCCESS, commitResult.count(), null);
 
             return ImportResultDto.builder()
                     .importId(history.getId())
                     .status(ImportStatus.SUCCESS)
-                    .createdCount(count)
+                    .createdCount(commitResult.count())
                     .build();
 
         } catch (Exception e) {
             // ============ ABORT ============
             log.error("[2PC] Transaction {} - ABORTING: {}", txId, e.getMessage(), e);
-            abort(tx, txId, pendingPath);
+            abort(txId, stagingPath, e.getMessage());
 
-            // Save failed import history record (in separate transaction)
-            ImportHistory history = saveImportHistory(
-                    user,
-                    request.getEntityType(),
-                    ImportStatus.FAILED,
-                    0,
-                    null,
-                    fileName,
-                    e.getMessage());
+            // Get the ImportHistory if it was created
+            ImportHistory history = importHistoryRepository.findByTransactionId(txId).orElse(null);
+            Long importId = history != null ? history.getId() : null;
 
             return ImportResultDto.builder()
-                    .importId(history.getId())
+                    .importId(importId)
                     .status(ImportStatus.FAILED)
                     .createdCount(0)
                     .errorMessage(e.getMessage())
@@ -119,73 +100,50 @@ public class ImportTransactionCoordinator {
         }
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    protected ImportTransaction createTransaction(UUID txId, Long userId, EntityType entityType) {
-        ImportTransaction tx = ImportTransaction.builder()
-                .transactionId(txId)
-                .status(TransactionState.STARTED)
-                .userId(userId)
-                .entityType(entityType.name())
-                .build();
-        return txRepository.save(tx);
-    }
+    private void abort(UUID txId, String stagingPath, String errorMessage) {
+        log.info("[2PC] ABORT: rolling back transaction {}", txId);
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    protected void updateTransactionStatus(ImportTransaction tx, TransactionState status) {
-        tx.setStatus(status);
-        tx.setUpdatedAt(LocalDateTime.now());
-        txRepository.save(tx);
-    }
-
-    private void abort(ImportTransaction tx, UUID txId, String pendingPath) {
+        // Database abort (marks ImportHistory as ABORTED/FAILED)
         try {
-            updateTransactionStatus(tx, TransactionState.ABORTING);
+            databaseParticipant.abort(txId, errorMessage);
         } catch (Exception e) {
-            log.error("[2PC] Failed to update transaction status to ABORTING", e);
+            log.error("[2PC] Failed to abort database: {}", e.getMessage());
         }
 
-        // Database rollback
+        // MinIO abort (delete staging file)
         try {
-            databaseParticipant.abort(txId);
-        } catch (Exception e) {
-            log.error("[2PC] Failed to abort database transaction: {}", e.getMessage());
-        }
-
-        // MinIO rollback
-        try {
-            if (pendingPath != null) {
-                minIOParticipant.abort(pendingPath);
-            }
+            minIOParticipant.abort(stagingPath);
         } catch (Exception e) {
             log.error("[2PC] Failed to abort MinIO: {}", e.getMessage());
-        }
-
-        // Update transaction record status
-        try {
-            tx.setStatus(TransactionState.ABORTED);
-            tx.setUpdatedAt(LocalDateTime.now());
-            txRepository.save(tx);
-        } catch (Exception e) {
-            log.error("[2PC] Failed to update transaction status to ABORTED", e);
         }
 
         log.info("[2PC] ========== Transaction {} ABORTED ==========", txId);
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    protected ImportHistory saveImportHistory(User user, EntityType entityType,
-            ImportStatus status, int count,
-            String filePath, String fileName,
-            String errorMessage) {
-        ImportHistory history = new ImportHistory();
-        history.setUser(user);
-        history.setEntityType(entityType);
-        history.setStatus(status);
-        history.setCreatedCount(count);
-        history.setFilePath(filePath);
-        history.setFileName(fileName);
-        history.setErrorMessage(errorMessage);
-        return importHistoryRepository.save(history);
+    // ==================== Helper Methods ====================
+
+    private void updateImportHistoryFileName(UUID txId, String fileName) {
+        TransactionTemplate tt = new TransactionTemplate(txManager);
+        tt.executeWithoutResult(txStatus -> {
+            importHistoryRepository.findByTransactionId(txId).ifPresent(history -> {
+                history.setFileName(fileName);
+                importHistoryRepository.save(history);
+            });
+        });
+    }
+
+    private ImportHistory finalizeImportHistory(UUID txId, ImportStatus status, int count, String errorMessage) {
+        TransactionTemplate tt = new TransactionTemplate(txManager);
+        return tt.execute(txStatus -> {
+            ImportHistory history = importHistoryRepository.findByTransactionId(txId)
+                    .orElseThrow(() -> new IllegalStateException("ImportHistory not found for txId: " + txId));
+            history.setStatus(status);
+            history.setCreatedCount(count);
+            if (errorMessage != null) {
+                history.setErrorMessage(errorMessage);
+            }
+            return importHistoryRepository.save(history);
+        });
     }
 
     private String buildFilePath(EntityType entityType, User user, String originalFileName) {

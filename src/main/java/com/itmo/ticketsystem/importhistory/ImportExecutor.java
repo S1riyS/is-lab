@@ -27,9 +27,13 @@ public class ImportExecutor {
     private final CoordinatesImportService coordinatesImportService;
 
     @Transactional
-    protected int executeImport(ImportRequestDto importRequest, User currentUser) throws Exception {
+    public int executeImport(ImportRequestDto importRequest, User currentUser) {
         Importer<?> importer = getImporter(importRequest.getEntityType());
-        return importer.doImport(importRequest.getData(), currentUser);
+        try {
+            return importer.doImport(importRequest.getData(), currentUser);
+        } catch (Exception e) {
+            throw new RuntimeException("Import failed: " + e.getMessage(), e);
+        }
     }
 
     private Importer<?> getImporter(EntityType entityType) {

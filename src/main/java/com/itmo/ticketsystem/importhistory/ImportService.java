@@ -31,7 +31,7 @@ public class ImportService {
     private final AuthorizationService authorizationService;
     private final ObjectMapper objectMapper;
     private final MinIOService minIOService;
-    private final ImportTransactionCoordinator transactionCoordinator;
+    private final ImportTransactionCoordinator ClassicTwoPhaseCommitOrchestrator;
 
     public List<ImportHistoryDto> getImportHistory(EntityType entityType, User currentUser) {
         authorizationService.requireAuthenticated(currentUser);
@@ -58,8 +58,8 @@ public class ImportService {
             ImportRequestDto importRequest = objectMapper.readValue(file.getBytes(), ImportRequestDto.class);
             log.info("Import entity type: {}", importRequest.getEntityType());
 
-            // Execute 2PC
-            return transactionCoordinator.executeWithTwoPhaseCommit(
+            // Execute import with 2PC orchestrator
+            return ClassicTwoPhaseCommitOrchestrator.run(
                     file,
                     importRequest,
                     currentUser,

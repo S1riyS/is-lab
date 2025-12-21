@@ -40,8 +40,7 @@ dependencies {
     implementation 'org.infinispan:infinispan-core:14.0.19.Final'
     implementation 'org.infinispan:infinispan-commons:14.0.19.Final'
 
-    // TODO: remove
-    // Транзакции для Infinispan (обе версии для совместимости)
+    // Transaction API (for Infinispan compatibility)
     implementation 'jakarta.transaction:jakarta.transaction-api'
     implementation 'javax.transaction:javax.transaction-api:1.3'
 

@@ -1,115 +1,114 @@
 package com.itmo.ticketsystem.importhistory.transaction.participants;
 
-import com.itmo.ticketsystem.common.EntityType;
-import com.itmo.ticketsystem.common.service.Importer;
-import com.itmo.ticketsystem.coordinates.CoordinatesImportService;
-import com.itmo.ticketsystem.event.EventImportService;
+import com.itmo.ticketsystem.common.ImportStatus;
+import com.itmo.ticketsystem.importhistory.ImportExecutor;
+import com.itmo.ticketsystem.importhistory.ImportHistory;
+import com.itmo.ticketsystem.importhistory.ImportHistoryRepository;
 import com.itmo.ticketsystem.importhistory.dto.ImportRequestDto;
-import com.itmo.ticketsystem.location.LocationImportService;
-import com.itmo.ticketsystem.person.PersonImportService;
-import com.itmo.ticketsystem.ticket.TicketImportService;
+import com.itmo.ticketsystem.importhistory.transaction.TransactionState;
 import com.itmo.ticketsystem.user.User;
-import com.itmo.ticketsystem.venue.VenueImportService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Участник 2PC для базы данных.
- * Управляет транзакциями БД вручную для поддержки 2PC.
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class DatabaseParticipant {
 
     private final PlatformTransactionManager transactionManager;
-    private final TicketImportService ticketImportService;
-    private final EventImportService eventImportService;
-    private final VenueImportService venueImportService;
-    private final PersonImportService personImportService;
-    private final LocationImportService locationImportService;
-    private final CoordinatesImportService coordinatesImportService;
+    private final ImportHistoryRepository importHistoryRepository;
+    private final ImportExecutor importExecutor;
 
-    private final ConcurrentHashMap<UUID, TransactionStatus> activeTransactions = new ConcurrentHashMap<>();
-
-    public int prepare(UUID txId, ImportRequestDto request, User user) throws Exception {
-        log.info("[2PC DB] PREPARE: starting transaction {}", txId);
-
-        // New transaction
-        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
-        def.setName("import-2pc-" + txId);
-        def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-        def.setIsolationLevel(TransactionDefinition.ISOLATION_READ_COMMITTED);
-
-        TransactionStatus status = transactionManager.getTransaction(def);
-        activeTransactions.put(txId, status);
-
-        try {
-            // Выполняем импорт
-            Importer<?> importer = getImporter(request.getEntityType());
-            int count = importer.doImport(request.getData(), user);
-
-            log.info("[2PC DB] PREPARE: SUCCESS - {} records ready to commit", count);
-            return count;
-
-        } catch (Exception e) {
-            log.error("[2PC DB] PREPARE: FAILED - {}", e.getMessage());
-            // При ошибке откатываем транзакцию
-            abort(txId);
-            throw e;
-        }
+    public record PrepareResult(Long txDbId) {
     }
 
-    public void commit(UUID txId) {
-        log.info("[2PC DB] COMMIT: committing transaction {}", txId);
+    public record CommitResult(int count) {
+    }
 
-        TransactionStatus status = activeTransactions.remove(txId);
-        if (status != null) {
-            try {
-                transactionManager.commit(status);
-                log.info("[2PC DB] COMMIT: SUCCESS");
-            } catch (Exception e) {
-                log.error("[2PC DB] COMMIT: FAILED - {}", e.getMessage());
-                throw e;
+    public PrepareResult prepare(UUID txId, ImportRequestDto request, User user, String pendingPath, String finalPath) {
+        log.info("[2PC DB] PREPARE: creating transaction record for txId={}", txId);
+
+        TransactionTemplate tt = new TransactionTemplate(transactionManager);
+        PrepareResult result = tt.execute(txStatus -> {
+            // Create ImportHistory with transaction info
+            ImportHistory history = ImportHistory.builder()
+                    .transactionId(txId)
+                    .transactionStatus(TransactionState.PREPARED)
+                    .user(user)
+                    .entityType(request.getEntityType())
+                    .status(ImportStatus.PENDING)
+                    .pendingFilePath(pendingPath)
+                    .filePath(finalPath)
+                    .build();
+            history = importHistoryRepository.save(history);
+
+            return new PrepareResult(history.getId());
+        });
+
+        log.info("[2PC DB] PREPARE: SUCCESS - transaction record created");
+        return result;
+    }
+
+    public CommitResult commit(UUID txId, ImportRequestDto request, User user) {
+        log.info("[2PC DB] COMMIT: importing data for txId={}", txId);
+
+        TransactionTemplate tt = new TransactionTemplate(transactionManager);
+        CommitResult result = tt.execute(txStatus -> {
+            ImportHistory history = importHistoryRepository
+                    .findByTransactionId(txId)
+                    .orElseThrow(() -> new IllegalStateException("Transaction not found: " + txId));
+
+            if (history.getTransactionStatus() != TransactionState.PREPARED) {
+                throw new IllegalStateException(
+                        "Transaction is not in PREPARED state: " + history.getTransactionStatus());
             }
-        } else {
-            log.warn("[2PC DB] COMMIT: No active transaction found for {}", txId);
-        }
+
+            // Set COMMITTING status
+            history.setTransactionStatus(TransactionState.COMMITTING);
+            history.setUpdatedAt(LocalDateTime.now());
+            importHistoryRepository.save(history);
+
+            // Execute import
+            int count = importExecutor.executeImport(request, user);
+
+            // Set COMMITTED status
+            history.setCreatedCount(count);
+            history.setTransactionStatus(TransactionState.COMMITTED);
+            history.setUpdatedAt(LocalDateTime.now());
+            importHistoryRepository.save(history);
+
+            return new CommitResult(count);
+        });
+
+        log.info("[2PC DB] COMMIT: SUCCESS - {} records imported", result != null ? result.count() : 0);
+        return result;
     }
 
     public void abort(UUID txId) {
-        log.info("[2PC DB] ABORT: rolling back transaction {}", txId);
-
-        TransactionStatus status = activeTransactions.remove(txId);
-        if (status != null) {
-            try {
-                transactionManager.rollback(status);
-                log.info("[2PC DB] ABORT: SUCCESS");
-            } catch (Exception e) {
-                log.error("[2PC DB] ABORT: FAILED - {}", e.getMessage());
-            }
-        } else {
-            log.warn("[2PC DB] ABORT: No active transaction found for {}", txId);
-        }
+        abort(txId, null);
     }
 
-    private Importer<?> getImporter(EntityType entityType) {
-        return switch (entityType) {
-            case TICKET -> ticketImportService;
-            case EVENT -> eventImportService;
-            case VENUE -> venueImportService;
-            case PERSON -> personImportService;
-            case LOCATION -> locationImportService;
-            case COORDINATES -> coordinatesImportService;
-            default -> throw new IllegalArgumentException("Unsupported entity type: " + entityType);
-        };
+    public void abort(UUID txId, String errorMessage) {
+        log.info("[2PC DB] ABORT: marking transaction as aborted for txId={}", txId);
+
+        TransactionTemplate tt = new TransactionTemplate(transactionManager);
+        tt.executeWithoutResult(txStatus -> {
+            importHistoryRepository.findByTransactionId(txId).ifPresent(history -> {
+                // Set ABORTED status
+                history.setTransactionStatus(TransactionState.ABORTED);
+                history.setStatus(ImportStatus.FAILED);
+                history.setErrorMessage(errorMessage);
+                history.setUpdatedAt(LocalDateTime.now());
+                importHistoryRepository.save(history);
+            });
+        });
+
+        log.info("[2PC DB] ABORT: SUCCESS");
     }
 }

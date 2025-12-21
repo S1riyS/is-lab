@@ -1,6 +1,7 @@
 // src/modules/common/api/importTypes.ts
 
 export enum ImportStatus {
+    PENDING = "PENDING",
     SUCCESS = "SUCCESS",
     FAILED = "FAILED",
 }
